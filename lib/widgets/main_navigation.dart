@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/discover/discover_screen.dart';
 import '../screens/library/library_screen.dart';
+import '../screens/settings/settings_screen.dart';
 
-/// Main navigation widget with 3-tab bottom navigation
+/// Main navigation widget with 4-tab bottom navigation
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeChanged;
+
+  const MainNavigation({
+    super.key,
+    required this.themeMode,
+    required this.onThemeChanged,
+  });
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -14,18 +22,22 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    DiscoverScreen(),
-    LibraryScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      const HomeScreen(),
+      const DiscoverScreen(),
+      const LibraryScreen(),
+      SettingsScreen(
+        currentThemeMode: widget.themeMode,
+        onThemeChanged: widget.onThemeChanged,
+      ),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -49,6 +61,11 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Icon(Icons.library_books_outlined),
             selectedIcon: Icon(Icons.library_books),
             label: 'Library',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

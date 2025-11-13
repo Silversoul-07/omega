@@ -13,8 +13,21 @@ void main() async {
   runApp(const ContentTrackerApp());
 }
 
-class ContentTrackerApp extends StatelessWidget {
+class ContentTrackerApp extends StatefulWidget {
   const ContentTrackerApp({super.key});
+
+  @override
+  State<ContentTrackerApp> createState() => _ContentTrackerAppState();
+}
+
+class _ContentTrackerAppState extends State<ContentTrackerApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void _updateThemeMode(ThemeMode mode) {
+    setState(() {
+      _themeMode = mode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +35,12 @@ class ContentTrackerApp extends StatelessWidget {
       title: 'Content Tracker',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: _themeMode,
       debugShowCheckedModeBanner: false,
-      home: const MainNavigation(),
+      home: MainNavigation(
+        themeMode: _themeMode,
+        onThemeChanged: _updateThemeMode,
+      ),
     );
   }
 }
