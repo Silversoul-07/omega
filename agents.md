@@ -14,25 +14,39 @@ This file outlines the plan and technical guidelines for building an offline-fir
 - **Framework:** Flutter
 - **Database:** Isar (A fast, easy-to-use, and strongly-typed database for Flutter).
 - **State Management:** To be decided (will start with a simple approach).
-- **Folder Structure:** Feature-first or layer-first (to be decided).
+- **Folder Structure:** Feature-first (implemented).
+
+## Setup Instructions
+
+After pulling the code, run the following command to generate Isar database code:
+
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+Then run the app:
+
+```bash
+flutter run
+```
 
 ---
 
 ## Development To-Do List
 
-### Phase 1: Project Setup & Core Models
+### ~~Phase 1: Project Setup & Core Models~~ ✅
 
-- [ ] Initialize a new Flutter project named `content_tracker`.
-- [ ] Set up the Isar database.
-- [ ] Define the core data models for Isar:
-    - `ContentItem`: A base class/schema with fields like `id`, `title`, `type` (enum: Anime, Comic, etc.), `status` (enum: Watching, Completed, etc.), `progress`, `total`, `imageUrl`.
-- [ ] Create a clean, scalable folder structure.
+- [x] ~~Initialize a new Flutter project named `content_tracker`.~~
+- [x] ~~Set up the Isar database.~~
+- [x] ~~Define the core data models for Isar:~~
+    - ~~`ContentItem`: A base class/schema with fields like `id`, `title`, `type` (enum: Anime, Comic, etc.), `status` (enum: Watching, Completed, etc.), `progress`, `total`, `imageUrl`.~~
+- [x] ~~Create a clean, scalable folder structure.~~
 
-### Phase 2: Main Navigation & UI Shell
+### ~~Phase 2: Main Navigation & UI Shell~~ ✅
 
-- [ ] Implement the main 3-tab navigation bar: Home, Discover, Library.
-- [ ] Create placeholder pages for each tab.
-- [ ] Set up a basic app theme (colors, fonts).
+- [x] ~~Implement the main 3-tab navigation bar: Home, Discover, Library.~~
+- [x] ~~Create placeholder pages for each tab.~~
+- [x] ~~Set up a basic app theme (colors, fonts).~~
 
 ### Phase 3: Home Tab ("Currently Watching")
 
