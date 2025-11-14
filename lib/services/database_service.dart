@@ -1,6 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/content_item.dart';
+import '../models/enums.dart';
 
 /// Service to manage Isar database operations
 class DatabaseService {

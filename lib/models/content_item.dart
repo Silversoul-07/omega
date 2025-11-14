@@ -48,11 +48,11 @@ class ContentItem {
     this.progress = 0,
     this.total = 0,
     this.imageUrl,
-    DateTime? createdAt,
-    DateTime? updatedAt,
     this.notes,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) {
+    createdAt = DateTime.now();
+    updatedAt = DateTime.now();
+  }
 
   /// Calculate progress percentage
   double get progressPercentage {

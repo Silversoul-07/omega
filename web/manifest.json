@@ -1,6 +1,6 @@
 {
-    "name": "content_tracker",
-    "short_name": "content_tracker",
+    "name": "myapp",
+    "short_name": "myapp",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

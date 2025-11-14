@@ -1,4 +1,4 @@
-package com.example.content_tracker
+package com.example.myapp
 
 import io.flutter.embedding.android.FlutterActivity
 
