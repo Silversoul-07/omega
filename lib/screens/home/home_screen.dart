@@ -82,14 +82,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<List<ContentItem>> _fetchContent() async {
+    // Priority: _selectedType > selectedProfile > all watching
+    if (_selectedType != null) {
+      return await _db.getContentItemsByTypeAndStatus(
+        _selectedType!,
+        ContentStatus.watching,
+      );
+    } else if (widget.selectedProfile != null) {
+      return await _db.getContentItemsByTypeAndStatus(
+        widget.selectedProfile!.contentType,
+        ContentStatus.watching,
+      );
+    } else {
+      return await _db.getContentItemsByStatus(ContentStatus.watching);
+    }
+  }
+
   Widget _buildContentList() {
     return FutureBuilder<List<ContentItem>>(
-      future: _selectedType == null
-          ? _db.getContentItemsByStatus(ContentStatus.watching)
-          : _db.getContentItemsByTypeAndStatus(
-              _selectedType!,
-              ContentStatus.watching,
-            ),
+      future: _fetchContent(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

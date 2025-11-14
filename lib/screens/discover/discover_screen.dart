@@ -190,11 +190,19 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Future<List<ContentItem>> _fetchContent() async {
     List<ContentItem> items;
 
-    // Apply search filter
+    // Apply filters: search > _selectedType > selectedProfile > all
     if (_searchQuery.isNotEmpty) {
       items = await _db.searchByTitle(_searchQuery);
+      // Further filter by profile if selected
+      if (widget.selectedProfile != null) {
+        items = items
+            .where((item) => item.type == widget.selectedProfile!.contentType)
+            .toList();
+      }
     } else if (_selectedType != null) {
       items = await _db.getContentItemsByType(_selectedType!);
+    } else if (widget.selectedProfile != null) {
+      items = await _db.getContentItemsByType(widget.selectedProfile!.contentType);
     } else {
       items = await _db.getAllContentItems();
     }

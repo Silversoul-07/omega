@@ -70,7 +70,9 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   Widget _buildAllTab() {
     return FutureBuilder<List<ContentItem>>(
-      future: _db.getAllContentItems(),
+      future: widget.selectedProfile == null
+          ? _db.getAllContentItems()
+          : _db.getContentItemsByType(widget.selectedProfile!.contentType),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -99,7 +101,10 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   Widget _buildStatusTab(ContentStatus status) {
     return FutureBuilder<List<ContentItem>>(
-      future: _db.getContentItemsByStatus(status),
+      future: widget.selectedProfile == null
+          ? _db.getContentItemsByStatus(status)
+          : _db.getContentItemsByTypeAndStatus(
+              widget.selectedProfile!.contentType, status),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
