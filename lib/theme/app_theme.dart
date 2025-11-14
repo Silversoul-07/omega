@@ -7,15 +7,15 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFF8B5CF6); // Purple
   static const Color accentColor = Color(0xFF10B981); // Green
 
-  // Background colors
-  static const Color backgroundColor = Color(0xFFF9FAFB);
-  static const Color surfaceColor = Colors.white;
-  static const Color cardColor = Colors.white;
+  // Light theme colors (Pinterest-style soft white)
+  static const Color backgroundColor = Color(0xFFF5F5F5); // Soft white like Pinterest
+  static const Color surfaceColor = Color(0xFFFFFFFF); // Pure white cards
+  static const Color cardColor = Color(0xFFFFFFFF); // Pure white
 
-  // Dark theme colors
-  static const Color darkBackgroundColor = Color(0xFF111827);
-  static const Color darkSurfaceColor = Color(0xFF1F2937);
-  static const Color darkCardColor = Color(0xFF374151);
+  // Dark theme colors (Pure black)
+  static const Color darkBackgroundColor = Color(0xFF000000); // Pure black
+  static const Color darkSurfaceColor = Color(0xFF1A1A1A); // Slightly elevated black
+  static const Color darkCardColor = Color(0xFF2A2A2A); // Card elevation
 
   /// Light theme
   static ThemeData get lightTheme {
