@@ -17,65 +17,69 @@ const ContentItemSchema = CollectionSchema(
   name: r'ContentItem',
   id: -3800002479438537506,
   properties: {
-    r'createdAt': PropertySchema(
+    r'categoryId': PropertySchema(
       id: 0,
+      name: r'categoryId',
+      type: IsarType.long,
+    ),
+    r'createdAt': PropertySchema(
+      id: 1,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'imageUrl': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'imageUrl',
       type: IsarType.string,
     ),
     r'isCompleted': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'isCompleted',
       type: IsarType.bool,
     ),
     r'notes': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'notes',
       type: IsarType.string,
     ),
+    r'profileId': PropertySchema(
+      id: 5,
+      name: r'profileId',
+      type: IsarType.long,
+    ),
     r'progress': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'progress',
       type: IsarType.long,
     ),
     r'progressDisplay': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'progressDisplay',
       type: IsarType.string,
     ),
     r'progressPercentage': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'progressPercentage',
       type: IsarType.double,
     ),
     r'status': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'status',
       type: IsarType.string,
       enumMap: _ContentItemstatusEnumValueMap,
     ),
     r'title': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'title',
       type: IsarType.string,
     ),
     r'total': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'total',
       type: IsarType.long,
     ),
-    r'type': PropertySchema(
-      id: 10,
-      name: r'type',
-      type: IsarType.string,
-      enumMap: _ContentItemtypeEnumValueMap,
-    ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -129,7 +133,6 @@ int _contentItemEstimateSize(
   bytesCount += 3 + object.progressDisplay.length * 3;
   bytesCount += 3 + object.status.name.length * 3;
   bytesCount += 3 + object.title.length * 3;
-  bytesCount += 3 + object.type.name.length * 3;
   return bytesCount;
 }
 
@@ -139,18 +142,19 @@ void _contentItemSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeString(offsets[1], object.imageUrl);
-  writer.writeBool(offsets[2], object.isCompleted);
-  writer.writeString(offsets[3], object.notes);
-  writer.writeLong(offsets[4], object.progress);
-  writer.writeString(offsets[5], object.progressDisplay);
-  writer.writeDouble(offsets[6], object.progressPercentage);
-  writer.writeString(offsets[7], object.status.name);
-  writer.writeString(offsets[8], object.title);
-  writer.writeLong(offsets[9], object.total);
-  writer.writeString(offsets[10], object.type.name);
-  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeLong(offsets[0], object.categoryId);
+  writer.writeDateTime(offsets[1], object.createdAt);
+  writer.writeString(offsets[2], object.imageUrl);
+  writer.writeBool(offsets[3], object.isCompleted);
+  writer.writeString(offsets[4], object.notes);
+  writer.writeLong(offsets[5], object.profileId);
+  writer.writeLong(offsets[6], object.progress);
+  writer.writeString(offsets[7], object.progressDisplay);
+  writer.writeDouble(offsets[8], object.progressPercentage);
+  writer.writeString(offsets[9], object.status.name);
+  writer.writeString(offsets[10], object.title);
+  writer.writeLong(offsets[11], object.total);
+  writer.writeDateTime(offsets[12], object.updatedAt);
 }
 
 ContentItem _contentItemDeserialize(
@@ -160,20 +164,20 @@ ContentItem _contentItemDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = ContentItem(
+    categoryId: reader.readLong(offsets[0]),
     id: id,
-    imageUrl: reader.readStringOrNull(offsets[1]),
-    notes: reader.readStringOrNull(offsets[3]),
-    progress: reader.readLongOrNull(offsets[4]) ?? 0,
+    imageUrl: reader.readStringOrNull(offsets[2]),
+    notes: reader.readStringOrNull(offsets[4]),
+    profileId: reader.readLong(offsets[5]),
+    progress: reader.readLongOrNull(offsets[6]) ?? 0,
     status:
-        _ContentItemstatusValueEnumMap[reader.readStringOrNull(offsets[7])] ??
+        _ContentItemstatusValueEnumMap[reader.readStringOrNull(offsets[9])] ??
             ContentStatus.planToWatch,
-    title: reader.readString(offsets[8]),
-    total: reader.readLongOrNull(offsets[9]) ?? 0,
-    type: _ContentItemtypeValueEnumMap[reader.readStringOrNull(offsets[10])] ??
-        ContentType.anime,
+    title: reader.readString(offsets[10]),
+    total: reader.readLongOrNull(offsets[11]) ?? 0,
   );
-  object.createdAt = reader.readDateTime(offsets[0]);
-  object.updatedAt = reader.readDateTime(offsets[11]);
+  object.createdAt = reader.readDateTime(offsets[1]);
+  object.updatedAt = reader.readDateTime(offsets[12]);
   return object;
 }
 
@@ -185,30 +189,31 @@ P _contentItemDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
-    case 3:
       return (reader.readStringOrNull(offset)) as P;
+    case 3:
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readDouble(offset)) as P;
+    case 9:
       return (_ContentItemstatusValueEnumMap[reader.readStringOrNull(offset)] ??
           ContentStatus.planToWatch) as P;
-    case 8:
-      return (reader.readString(offset)) as P;
-    case 9:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 10:
-      return (_ContentItemtypeValueEnumMap[reader.readStringOrNull(offset)] ??
-          ContentType.anime) as P;
+      return (reader.readString(offset)) as P;
     case 11:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 12:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -228,20 +233,6 @@ const _ContentItemstatusValueEnumMap = {
   r'completed': ContentStatus.completed,
   r'onHold': ContentStatus.onHold,
   r'dropped': ContentStatus.dropped,
-};
-const _ContentItemtypeEnumValueMap = {
-  r'anime': r'anime',
-  r'comic': r'comic',
-  r'novel': r'novel',
-  r'movie': r'movie',
-  r'tvSeries': r'tvSeries',
-};
-const _ContentItemtypeValueEnumMap = {
-  r'anime': ContentType.anime,
-  r'comic': ContentType.comic,
-  r'novel': ContentType.novel,
-  r'movie': ContentType.movie,
-  r'tvSeries': ContentType.tvSeries,
 };
 
 Id _contentItemGetId(ContentItem object) {
@@ -382,6 +373,62 @@ extension ContentItemQueryWhere
 
 extension ContentItemQueryFilter
     on QueryBuilder<ContentItem, ContentItem, QFilterCondition> {
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      categoryIdEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'categoryId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      categoryIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'categoryId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      categoryIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'categoryId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      categoryIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'categoryId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
       createdAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -799,6 +846,62 @@ extension ContentItemQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'notes',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      profileIdEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'profileId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      profileIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'profileId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      profileIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'profileId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      profileIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'profileId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1380,137 +1483,6 @@ extension ContentItemQueryFilter
     });
   }
 
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeEqualTo(
-    ContentType value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeGreaterThan(
-    ContentType value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeLessThan(
-    ContentType value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeBetween(
-    ContentType lower,
-    ContentType upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'type',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'type',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'type',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition> typeIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'type',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
-      typeIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'type',
-        value: '',
-      ));
-    });
-  }
-
   QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
       updatedAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -1576,6 +1548,18 @@ extension ContentItemQueryLinks
 
 extension ContentItemQuerySortBy
     on QueryBuilder<ContentItem, ContentItem, QSortBy> {
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.desc);
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1621,6 +1605,18 @@ extension ContentItemQuerySortBy
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByNotesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByProfileId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profileId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByProfileIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profileId', Sort.desc);
     });
   }
 
@@ -1699,18 +1695,6 @@ extension ContentItemQuerySortBy
     });
   }
 
-  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByType() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'type', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByTypeDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'type', Sort.desc);
-    });
-  }
-
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1726,6 +1710,18 @@ extension ContentItemQuerySortBy
 
 extension ContentItemQuerySortThenBy
     on QueryBuilder<ContentItem, ContentItem, QSortThenBy> {
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.desc);
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1783,6 +1779,18 @@ extension ContentItemQuerySortThenBy
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByNotesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByProfileId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profileId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByProfileIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'profileId', Sort.desc);
     });
   }
 
@@ -1861,18 +1869,6 @@ extension ContentItemQuerySortThenBy
     });
   }
 
-  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByType() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'type', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByTypeDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'type', Sort.desc);
-    });
-  }
-
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1888,6 +1884,12 @@ extension ContentItemQuerySortThenBy
 
 extension ContentItemQueryWhereDistinct
     on QueryBuilder<ContentItem, ContentItem, QDistinct> {
+  QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'categoryId');
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -1911,6 +1913,12 @@ extension ContentItemQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByProfileId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'profileId');
     });
   }
 
@@ -1955,13 +1963,6 @@ extension ContentItemQueryWhereDistinct
     });
   }
 
-  QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByType(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
@@ -1974,6 +1975,12 @@ extension ContentItemQueryProperty
   QueryBuilder<ContentItem, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<ContentItem, int, QQueryOperations> categoryIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'categoryId');
     });
   }
 
@@ -1998,6 +2005,12 @@ extension ContentItemQueryProperty
   QueryBuilder<ContentItem, String?, QQueryOperations> notesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'notes');
+    });
+  }
+
+  QueryBuilder<ContentItem, int, QQueryOperations> profileIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'profileId');
     });
   }
 
@@ -2036,12 +2049,6 @@ extension ContentItemQueryProperty
   QueryBuilder<ContentItem, int, QQueryOperations> totalProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'total');
-    });
-  }
-
-  QueryBuilder<ContentItem, ContentType, QQueryOperations> typeProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'type');
     });
   }
 
