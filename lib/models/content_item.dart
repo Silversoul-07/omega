@@ -13,9 +13,11 @@ class ContentItem {
   @Index()
   late String title;
 
-  /// Type of content (Anime, Comic, Novel, etc.)
-  @Enumerated(EnumType.name)
-  late ContentType type;
+  /// Profile ID (references Profile collection)
+  late int profileId;
+
+  /// Category ID (references Category collection)
+  late int categoryId;
 
   /// Current status of the content
   @Enumerated(EnumType.name)
@@ -43,7 +45,8 @@ class ContentItem {
   ContentItem({
     this.id = Isar.autoIncrement,
     required this.title,
-    required this.type,
+    required this.profileId,
+    required this.categoryId,
     this.status = ContentStatus.planToWatch,
     this.progress = 0,
     this.total = 0,
