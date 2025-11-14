@@ -90,7 +90,7 @@ class DatabaseService {
   /// Update progress for a content item
   Future<void> updateProgress(int id, int newProgress) async {
     final db = await isar;
-    await db.writeTxn() async {
+    await db.writeTxn(() async {
       final item = await db.contentItems.get(id);
       if (item != null) {
         item.progress = newProgress;

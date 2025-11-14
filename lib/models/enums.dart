@@ -1,40 +1,18 @@
-import 'package:isar/isar.dart';
-
 /// Content type enum for different media types
-@Name("ContentType")
 enum ContentType {
-  @Name("Anime")
   anime,
-
-  @Name("Comic")
   comic,
-
-  @Name("Novel")
   novel,
-
-  @Name("Movie")
   movie,
-
-  @Name("TVSeries")
   tvSeries,
 }
 
 /// Status enum for tracking progress
-@Name("ContentStatus")
 enum ContentStatus {
-  @Name("PlanToWatch")
   planToWatch,
-
-  @Name("Watching")
   watching,
-
-  @Name("Completed")
   completed,
-
-  @Name("OnHold")
   onHold,
-
-  @Name("Dropped")
   dropped,
 }
 
