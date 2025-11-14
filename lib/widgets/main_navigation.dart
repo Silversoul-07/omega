@@ -22,7 +22,8 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
-  final ProfileNotifier _profileNotifier = ProfileNotifier();
+  final ProfileNotifier _profileNotifier = ProfileNotifier()
+    ..selectProfile(ProfileType.anime);
 
   @override
   void dispose() {
@@ -105,16 +106,12 @@ class _MainNavigationState extends State<MainNavigation> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
-              children: [
-                _buildProfileChip('All', null),
-                const SizedBox(width: 8),
-                ...ProfileType.values.map((profile) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _buildProfileChip(profile.displayName, profile),
-                  );
-                }),
-              ],
+              children: ProfileType.values.map((profile) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildProfileChip(profile.displayName, profile),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -122,28 +119,28 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
-  Widget _buildProfileChip(String label, ProfileType? profile) {
+  Widget _buildProfileChip(String label, ProfileType profile) {
     final isSelected = _profileNotifier.selectedProfile == profile;
-    final color = profile?.color ?? Theme.of(context).colorScheme.primary;
+    final color = profile.color;
 
     return FilterChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (profile != null) ...[
-            Icon(
-              profile.icon,
-              size: 16,
-              color: isSelected ? color : Colors.grey,
-            ),
-            const SizedBox(width: 6),
-          ],
+          Icon(
+            profile.icon,
+            size: 16,
+            color: isSelected ? color : Colors.grey,
+          ),
+          const SizedBox(width: 6),
           Text(label),
         ],
       ),
       selected: isSelected,
       onSelected: (selected) {
-        _profileNotifier.selectProfile(selected ? profile : null);
+        if (selected) {
+          _profileNotifier.selectProfile(profile);
+        }
       },
       selectedColor: color.withOpacity(0.15),
       checkmarkColor: color,

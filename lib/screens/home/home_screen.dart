@@ -5,7 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
 
-/// Home screen - "Currently Watching" tab
+/// Home screen - "Now Playing" tab
 class HomeScreen extends StatefulWidget {
   final ProfileType? selectedProfile;
 
@@ -26,59 +26,60 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Currently Watching',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Filter chips
-          _buildFilterChips(),
-          // Content list
-          Expanded(
-            child: _buildContentList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
+        title: Row(
           children: [
-            _buildFilterChip('All', null),
-            const SizedBox(width: 8),
-            _buildFilterChip('Anime', ContentType.anime),
-            const SizedBox(width: 8),
-            _buildFilterChip('Comics', ContentType.comic),
-            const SizedBox(width: 8),
-            _buildFilterChip('Novels', ContentType.novel),
-            const SizedBox(width: 8),
-            _buildFilterChip('Movies', ContentType.movie),
-            const SizedBox(width: 8),
-            _buildFilterChip('TV Series', ContentType.tvSeries),
+            const Text(
+              'Now Playing',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTypeDropdown(),
+            ),
           ],
         ),
       ),
+      body: _buildContentList(),
     );
   }
 
-  Widget _buildFilterChip(String label, ContentType? type) {
-    final isSelected = _selectedType == type;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
+  Widget _buildTypeDropdown() {
+    return DropdownButton<ContentType?>(
+      value: _selectedType,
+      isExpanded: true,
+      underline: Container(),
+      hint: const Text('All Types'),
+      items: [
+        const DropdownMenuItem<ContentType?>(
+          value: null,
+          child: Text('All Types'),
+        ),
+        const DropdownMenuItem<ContentType?>(
+          value: ContentType.anime,
+          child: Text('Anime'),
+        ),
+        const DropdownMenuItem<ContentType?>(
+          value: ContentType.comic,
+          child: Text('Comics'),
+        ),
+        const DropdownMenuItem<ContentType?>(
+          value: ContentType.novel,
+          child: Text('Novels'),
+        ),
+        const DropdownMenuItem<ContentType?>(
+          value: ContentType.movie,
+          child: Text('Movies'),
+        ),
+        const DropdownMenuItem<ContentType?>(
+          value: ContentType.tvSeries,
+          child: Text('TV Series'),
+        ),
+      ],
+      onChanged: (value) {
         setState(() {
-          _selectedType = selected ? type : null;
+          _selectedType = value;
         });
       },
-      selectedColor: Theme.of(context).colorScheme.primaryContainer,
     );
   }
 
@@ -175,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Nothing Currently Watching',
+              'Nothing Playing',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -183,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Content you\'re actively watching or reading will appear here',
+              'Content you\'re actively enjoying will appear here',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey,
                   ),
