@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../models/content_item.dart';
 import '../../models/enums.dart';
+import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
 
 /// Home screen - "Currently Watching" tab
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final ProfileType? selectedProfile;
+
+  const HomeScreen({
+    super.key,
+    this.selectedProfile,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../models/content_item.dart';
 import '../../models/enums.dart';
+import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
 
 /// Discover screen - Browse and search content
 class DiscoverScreen extends StatefulWidget {
-  const DiscoverScreen({super.key});
+  final ProfileType? selectedProfile;
+
+  const DiscoverScreen({
+    super.key,
+    this.selectedProfile,
+  });
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();

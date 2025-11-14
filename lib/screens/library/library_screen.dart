@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../models/content_item.dart';
 import '../../models/enums.dart';
+import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
 
 /// Library screen - View all content in library
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  final ProfileType? selectedProfile;
+
+  const LibraryScreen({
+    super.key,
+    this.selectedProfile,
+  });
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
