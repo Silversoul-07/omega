@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/content_item.dart';
 import '../models/enums.dart';
-import '../services/database_service.dart';
+import 'content_details_bottom_sheet.dart';
 
 /// Reusable card widget for displaying content items
 class ContentCard extends StatelessWidget {
@@ -18,31 +18,66 @@ class ContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap ?? () => _showDetailsDialog(context),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Placeholder image
-              Container(
-                width: 60,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _getTypeColor(item.type).withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Card(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: InkWell(
+          onTap: onTap ?? () => _showDetailsDialog(context),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Placeholder image with gradient
+                Container(
+                  width: 70,
+                  height: 105,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _getTypeColor(item.type).withOpacity(0.8),
+                        _getTypeColor(item.type).withOpacity(0.5),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _getTypeColor(item.type).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _getTypeIcon(item.type),
+                    color: Colors.white.withOpacity(0.6),
+                    size: 36,
+                  ),
                 ),
-                child: Icon(
-                  _getTypeIcon(item.type),
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               // Content details
               Expanded(
                 child: Column(
@@ -52,11 +87,13 @@ class ContentCard extends StatelessWidget {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            height: 1.3,
                           ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
@@ -64,7 +101,7 @@ class ContentCard extends StatelessWidget {
                         _buildChip(
                           context,
                           item.type.displayName,
-                          Theme.of(context).colorScheme.primary,
+                          _getTypeColor(item.type),
                         ),
                         _buildChip(
                           context,
@@ -79,7 +116,7 @@ class ContentCard extends StatelessWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     // Progress bar
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,23 +126,30 @@ class ContentCard extends StatelessWidget {
                           children: [
                             Text(
                               'Progress',
-                              style: Theme.of(context).textTheme.bodySmall,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                             Text(
                               item.progressDisplay,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: item.total > 0 ? item.progress / item.total : 0,
-                          backgroundColor: Theme.of(context)
-                              .colorScheme
-                              .primaryContainer
-                              .withOpacity(0.3),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: item.total > 0 ? item.progress / item.total : 0,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primaryContainer
+                                .withOpacity(0.3),
+                            minHeight: 6,
+                          ),
                         ),
                       ],
                     ),
@@ -119,19 +163,43 @@ class ContentCard extends StatelessWidget {
     );
   }
 
+  Color _getTypeColor(ContentType type) {
+    switch (type) {
+      case ContentType.anime:
+        return const Color(0xFF2196F3);
+      case ContentType.comic:
+        return const Color(0xFFFF9800);
+      case ContentType.novel:
+        return const Color(0xFF4CAF50);
+      case ContentType.movie:
+        return const Color(0xFFF44336);
+      case ContentType.tvSeries:
+        return const Color(0xFF9C27B0);
+    }
+  }
+
   Widget _buildChip(BuildContext context, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.08),
+          ],
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
             ),
       ),
     );
@@ -168,204 +236,10 @@ class ContentCard extends StatelessWidget {
   }
 
   void _showDetailsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _ContentDetailsDialog(
-          item: item,
-          onChanged: onChanged,
-        );
-      },
+    ContentDetailsBottomSheet.show(
+      context,
+      item,
+      onChanged: onChanged,
     );
-  }
-}
-
-/// Dialog for viewing and editing content item details
-class _ContentDetailsDialog extends StatefulWidget {
-  final ContentItem item;
-  final VoidCallback? onChanged;
-
-  const _ContentDetailsDialog({
-    required this.item,
-    this.onChanged,
-  });
-
-  @override
-  State<_ContentDetailsDialog> createState() => _ContentDetailsDialogState();
-}
-
-class _ContentDetailsDialogState extends State<_ContentDetailsDialog> {
-  late int _currentProgress;
-  late ContentStatus _currentStatus;
-  final _db = DatabaseService();
-
-  @override
-  void initState() {
-    super.initState();
-    _currentProgress = widget.item.progress;
-    _currentStatus = widget.item.status;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.item.title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Type and Status
-            Row(
-              children: [
-                Chip(
-                  label: Text(widget.item.type.displayName),
-                  avatar: Icon(
-                    _getTypeIcon(widget.item.type),
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<ContentStatus>(
-                    initialValue: _currentStatus,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: ContentStatus.values.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text(status.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _currentStatus = value);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Progress
-            Text(
-              'Progress: $_currentProgress / ${widget.item.total}',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            Slider(
-              value: _currentProgress.toDouble(),
-              min: 0,
-              max: widget.item.total.toDouble(),
-              divisions: widget.item.total > 0 ? widget.item.total : 1,
-              label: _currentProgress.toString(),
-              onChanged: (value) {
-                setState(() => _currentProgress = value.toInt());
-              },
-            ),
-            const SizedBox(height: 8),
-            // Notes
-            if (widget.item.notes != null && widget.item.notes!.isNotEmpty) ...[
-              Text(
-                'Notes:',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.item.notes!,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-            ],
-            // Dates
-            Text(
-              'Added: ${_formatDate(widget.item.createdAt)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                  ),
-            ),
-            if (widget.item.createdAt != widget.item.updatedAt)
-              Text(
-                'Updated: ${_formatDate(widget.item.updatedAt)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
-              ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => _saveChanges(context),
-          child: const Text('Save'),
-        ),
-      ],
-    );
-  }
-
-  IconData _getTypeIcon(ContentType type) {
-    switch (type) {
-      case ContentType.anime:
-        return Icons.animation;
-      case ContentType.comic:
-        return Icons.auto_stories;
-      case ContentType.novel:
-        return Icons.menu_book;
-      case ContentType.movie:
-        return Icons.movie;
-      case ContentType.tvSeries:
-        return Icons.tv;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  Future<void> _saveChanges(BuildContext context) async {
-    try {
-      final updatedItem = widget.item
-        ..progress = _currentProgress
-        ..status = _currentStatus
-        ..updatedAt = DateTime.now();
-
-      // Auto-complete if progress reaches total
-      if (updatedItem.total > 0 && updatedItem.progress >= updatedItem.total) {
-        updatedItem.status = ContentStatus.completed;
-      }
-
-      await _db.updateContentItem(updatedItem);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onChanged?.call();
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

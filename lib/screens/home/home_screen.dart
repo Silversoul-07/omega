@@ -4,7 +4,7 @@ import '../../models/enums.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
-import '../../widgets/profile_switcher.dart';
+import '../../widgets/profile_carousel.dart';
 
 /// Home screen - Shows currently watching content
 class HomeScreen extends StatefulWidget {
@@ -30,84 +30,45 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Home',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 12),
-            _buildProfileSelector(),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTypeDropdown(),
-            ),
-          ],
+        title: const Text(
+          'Home',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // TODO: Implement search
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              // TODO: Implement advanced filters
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
+          if (widget.selectedProfile != null)
+            ProfileCarousel(
+              selectedProfile: widget.selectedProfile!,
+              onProfileSelected: (profile) {
+                widget.onProfileChange(profile);
+                setState(() {
+                  _selectedType = null;
+                  _selectedCategory = null;
+                });
+              },
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildTypeDropdown(),
+          ),
           _buildCategoryFilter(),
           Expanded(child: _buildContentList()),
         ],
-      ),
-    );
-  }
-
-  Widget _buildProfileSelector() {
-    return GestureDetector(
-      onTap: () async {
-        if (widget.selectedProfile != null) {
-          final newProfile = await ProfileSwitcher.show(
-            context,
-            widget.selectedProfile!,
-          );
-          if (newProfile != null) {
-            widget.onProfileChange(newProfile);
-            // Reset filters when profile changes
-            setState(() {
-              _selectedType = null;
-              _selectedCategory = null;
-            });
-          }
-        }
-      },
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.selectedProfile?.color ?? Colors.grey,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.selectedProfile?.icon ?? Icons.apps,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              widget.selectedProfile?.displayName ?? 'All',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: widget.selectedProfile?.color ?? Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-          ],
-        ),
       ),
     );
   }

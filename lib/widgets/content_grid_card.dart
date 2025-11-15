@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/content_item.dart';
 import '../models/enums.dart';
-import '../services/database_service.dart';
+import 'content_details_bottom_sheet.dart';
 
 /// IMDB/MAL style grid card for content items
 class ContentGridCard extends StatelessWidget {
@@ -18,53 +18,73 @@ class ContentGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _getTypeColor(item.type).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap ?? () => _showDetailsDialog(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Poster/Cover image
-            AspectRatio(
-              aspectRatio: 2 / 3,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          _getTypeColor(item.type).withOpacity(0.6),
-                          _getTypeColor(item.type).withOpacity(0.3),
-                        ],
+      child: Card(
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: InkWell(
+          onTap: onTap ?? () => _showDetailsDialog(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Poster/Cover image
+              AspectRatio(
+                aspectRatio: 2 / 3,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _getTypeColor(item.type).withOpacity(0.8),
+                            _getTypeColor(item.type).withOpacity(0.5),
+                            _getTypeColor(item.type).withOpacity(0.3),
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
+                      ),
+                      child: Icon(
+                        _getTypeIcon(item.type),
+                        size: 72,
+                        color: Colors.white.withOpacity(0.4),
                       ),
                     ),
-                    child: Icon(
-                      _getTypeIcon(item.type),
-                      size: 64,
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                  ),
                   // Progress overlay
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withOpacity(0.9),
                           ],
                         ),
                       ),
@@ -73,20 +93,37 @@ class ContentGridCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (item.total > 0)
-                            LinearProgressIndicator(
-                              value: item.progress / item.total,
-                              backgroundColor: Colors.white.withOpacity(0.2),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                _getStatusColor(item.status),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _getStatusColor(item.status)
+                                        .withOpacity(0.3),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: item.progress / item.total,
+                                  backgroundColor: Colors.white.withOpacity(0.2),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    _getStatusColor(item.status),
+                                  ),
+                                  minHeight: 5,
+                                ),
                               ),
                             ),
-                          if (item.total > 0) const SizedBox(height: 4),
+                          if (item.total > 0) const SizedBox(height: 6),
                           Text(
                             item.progressDisplay,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ],
@@ -95,16 +132,23 @@ class ContentGridCard extends StatelessWidget {
                   ),
                   // Status badge
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 10,
+                    right: 10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: _getStatusColor(item.status),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getStatusColor(item.status).withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         _getStatusShort(item.status),
@@ -112,6 +156,7 @@ class ContentGridCard extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -121,7 +166,7 @@ class ContentGridCard extends StatelessWidget {
             ),
             // Content details
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -129,23 +174,30 @@ class ContentGridCard extends StatelessWidget {
                     item.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 14,
+                      height: 1.3,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   if (item.category != null && item.category!.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.teal.withOpacity(0.15),
+                            Colors.teal.withOpacity(0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: Colors.teal.withOpacity(0.3),
+                          width: 1,
                         ),
                       ),
                       child: Text(
@@ -153,7 +205,8 @@ class ContentGridCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.teal.shade700,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ),
@@ -227,210 +280,10 @@ class ContentGridCard extends StatelessWidget {
   }
 
   void _showDetailsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _ContentDetailsDialog(
-          item: item,
-          onChanged: onChanged,
-        );
-      },
+    ContentDetailsBottomSheet.show(
+      context,
+      item,
+      onChanged: onChanged,
     );
-  }
-}
-
-/// Dialog for viewing and editing content item details
-class _ContentDetailsDialog extends StatefulWidget {
-  final ContentItem item;
-  final VoidCallback? onChanged;
-
-  const _ContentDetailsDialog({
-    required this.item,
-    this.onChanged,
-  });
-
-  @override
-  State<_ContentDetailsDialog> createState() => _ContentDetailsDialogState();
-}
-
-class _ContentDetailsDialogState extends State<_ContentDetailsDialog> {
-  late int _currentProgress;
-  late ContentStatus _currentStatus;
-  final _db = DatabaseService();
-
-  @override
-  void initState() {
-    super.initState();
-    _currentProgress = widget.item.progress;
-    _currentStatus = widget.item.status;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.item.title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Type, Category, and Status
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Chip(
-                  label: Text(widget.item.type.displayName),
-                  avatar: Icon(
-                    _getTypeIcon(widget.item.type),
-                    size: 16,
-                  ),
-                ),
-                if (widget.item.category != null &&
-                    widget.item.category!.isNotEmpty)
-                  Chip(
-                    label: Text(widget.item.category!),
-                    backgroundColor: Colors.teal.withOpacity(0.1),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<ContentStatus>(
-              value: _currentStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: ContentStatus.values.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(status.displayName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _currentStatus = value);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            // Progress
-            Text(
-              'Progress: $_currentProgress / ${widget.item.total}',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            Slider(
-              value: _currentProgress.toDouble(),
-              min: 0,
-              max: widget.item.total.toDouble(),
-              divisions: widget.item.total > 0 ? widget.item.total : 1,
-              label: _currentProgress.toString(),
-              onChanged: (value) {
-                setState(() => _currentProgress = value.toInt());
-              },
-            ),
-            const SizedBox(height: 8),
-            // Notes
-            if (widget.item.notes != null && widget.item.notes!.isNotEmpty) ...[
-              Text(
-                'Notes:',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.item.notes!,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-            ],
-            // Dates
-            Text(
-              'Added: ${_formatDate(widget.item.createdAt)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                  ),
-            ),
-            if (widget.item.createdAt != widget.item.updatedAt)
-              Text(
-                'Updated: ${_formatDate(widget.item.updatedAt)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
-              ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => _saveChanges(context),
-          child: const Text('Save'),
-        ),
-      ],
-    );
-  }
-
-  IconData _getTypeIcon(ContentType type) {
-    switch (type) {
-      case ContentType.anime:
-        return Icons.animation;
-      case ContentType.comic:
-        return Icons.auto_stories;
-      case ContentType.novel:
-        return Icons.menu_book;
-      case ContentType.movie:
-        return Icons.movie;
-      case ContentType.tvSeries:
-        return Icons.tv;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  Future<void> _saveChanges(BuildContext context) async {
-    try {
-      final updatedItem = widget.item
-        ..progress = _currentProgress
-        ..status = _currentStatus
-        ..updatedAt = DateTime.now();
-
-      // Auto-complete if progress reaches total
-      if (updatedItem.total > 0 && updatedItem.progress >= updatedItem.total) {
-        updatedItem.status = ContentStatus.completed;
-      }
-
-      await _db.updateContentItem(updatedItem);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onChanged?.call();
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

@@ -4,7 +4,7 @@ import '../../models/enums.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
-import '../../widgets/profile_switcher.dart';
+import '../../widgets/profile_carousel.dart';
 
 /// Library screen - View all content in library
 class LibraryScreen extends StatefulWidget {
@@ -38,72 +38,13 @@ class _LibraryScreenState extends State<LibraryScreen>
     super.dispose();
   }
 
-  Widget _buildProfileBadge() {
-    return GestureDetector(
-      onTap: () async {
-        if (widget.selectedProfile != null) {
-          final newProfile = await ProfileSwitcher.show(
-            context,
-            widget.selectedProfile!,
-          );
-          if (newProfile != null) {
-            widget.onProfileChange(newProfile);
-          }
-        }
-      },
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.selectedProfile?.color ?? Colors.grey,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.selectedProfile?.icon ?? Icons.apps,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              widget.selectedProfile?.displayName ?? 'All',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: widget.selectedProfile?.color ?? Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Library',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 12),
-            _buildProfileBadge(),
-          ],
+        title: const Text(
+          'Library',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         bottom: TabBar(
           controller: _tabController,
@@ -117,14 +58,28 @@ class _LibraryScreenState extends State<LibraryScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildAllTab(),
-          _buildStatusTab(ContentStatus.completed),
-          _buildStatusTab(ContentStatus.planToWatch),
-          _buildStatusTab(ContentStatus.onHold),
-          _buildStatusTab(ContentStatus.dropped),
+          if (widget.selectedProfile != null)
+            ProfileCarousel(
+              selectedProfile: widget.selectedProfile!,
+              onProfileSelected: (profile) {
+                widget.onProfileChange(profile);
+                setState(() {});
+              },
+            ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAllTab(),
+                _buildStatusTab(ContentStatus.completed),
+                _buildStatusTab(ContentStatus.planToWatch),
+                _buildStatusTab(ContentStatus.onHold),
+                _buildStatusTab(ContentStatus.dropped),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -201,10 +156,10 @@ class _LibraryScreenState extends State<LibraryScreen>
       child: GridView.builder(
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 0.55,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+          crossAxisCount: 2,
+          childAspectRatio: 0.58,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
         ),
         itemCount: items.length,
         itemBuilder: (context, index) {
