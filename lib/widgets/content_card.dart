@@ -57,19 +57,26 @@ class ContentCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
                       children: [
                         _buildChip(
                           context,
                           item.type.displayName,
                           Theme.of(context).colorScheme.primary,
                         ),
-                        const SizedBox(width: 8),
                         _buildChip(
                           context,
                           item.status.displayName,
                           _getStatusColor(context, item.status),
                         ),
+                        if (item.category != null && item.category!.isNotEmpty)
+                          _buildChip(
+                            context,
+                            item.category!,
+                            Colors.teal,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
