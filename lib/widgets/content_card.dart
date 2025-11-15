@@ -231,7 +231,7 @@ class _ContentDetailsDialogState extends State<_ContentDetailsDialog> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: DropdownButtonFormField<ContentStatus>(
-                    value: _currentStatus,
+                    initialValue: _currentStatus,
                     decoration: const InputDecoration(
                       labelText: 'Status',
                       border: OutlineInputBorder(),

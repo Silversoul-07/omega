@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../models/enums.dart';
 import '../models/profile_type.dart';
+
 
 /// Profile switcher modal to change active profile
 class ProfileSwitcher {

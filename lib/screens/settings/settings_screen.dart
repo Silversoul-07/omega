@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/profile_type.dart';
+import '../../models/content_item.dart';
 import '../../scripts/seed_data.dart';
 import '../../services/database_service.dart';
 import 'stats_screen.dart';
