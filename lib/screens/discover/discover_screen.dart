@@ -30,13 +30,53 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     super.dispose();
   }
 
+  Widget _buildProfileBadge() {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: widget.selectedProfile?.color ?? Colors.grey,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            widget.selectedProfile?.icon ?? Icons.apps,
+            size: 16,
+            color: widget.selectedProfile?.color ?? Colors.grey,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            widget.selectedProfile?.displayName ?? 'All',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: widget.selectedProfile?.color ?? Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Discover',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            const Text(
+              'Discover',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 12),
+            _buildProfileBadge(),
+          ],
         ),
       ),
       body: Column(

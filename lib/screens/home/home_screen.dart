@@ -21,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _db = DatabaseService();
   ContentType? _selectedType;
+  String? _selectedCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _buildContentList(),
+      body: Column(
+        children: [
+          _buildCategoryFilter(),
+          Expanded(child: _buildContentList()),
+        ],
+      ),
     );
   }
 
@@ -114,13 +120,73 @@ class _HomeScreenState extends State<HomeScreen> {
       onChanged: (value) {
         setState(() {
           _selectedType = value;
+          _selectedCategory = null; // Reset category when type changes
         });
       },
     );
   }
 
-  Future<List<ContentItem>> _fetchContent() async {
-    // Priority: _selectedType > selectedProfile > all watching
+  Widget _buildCategoryFilter() {
+    return FutureBuilder<List<ContentItem>>(
+      future: _fetchBaseContent(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final categories = snapshot.data!
+            .where((item) => item.category != null && item.category!.isNotEmpty)
+            .map((item) => item.category!)
+            .toSet()
+            .toList()
+          ..sort();
+
+        if (categories.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                FilterChip(
+                  label: const Text('All'),
+                  selected: _selectedCategory == null,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedCategory = null;
+                    });
+                  },
+                  selectedColor: widget.selectedProfile?.color.withOpacity(0.2),
+                ),
+                const SizedBox(width: 8),
+                ...categories.map((category) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(category),
+                      selected: _selectedCategory == category,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedCategory = selected ? category : null;
+                        });
+                      },
+                      selectedColor: widget.selectedProfile?.color.withOpacity(0.2),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<List<ContentItem>> _fetchBaseContent() async {
+    // Get base content without category filter
     if (_selectedType != null) {
       return await _db.getContentItemsByTypeAndStatus(
         _selectedType!,
@@ -134,6 +200,17 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       return await _db.getContentItemsByStatus(ContentStatus.watching);
     }
+  }
+
+  Future<List<ContentItem>> _fetchContent() async {
+    List<ContentItem> items = await _fetchBaseContent();
+
+    // Apply category filter if selected
+    if (_selectedCategory != null) {
+      items = items.where((item) => item.category == _selectedCategory).toList();
+    }
+
+    return items;
   }
 
   Widget _buildContentList() {
