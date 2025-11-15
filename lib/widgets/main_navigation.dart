@@ -37,9 +37,18 @@ class _MainNavigationState extends State<MainNavigation> {
       animation: _profileNotifier,
       builder: (context, child) {
         final List<Widget> screens = [
-          HomeScreen(selectedProfile: _profileNotifier.selectedProfile),
-          DiscoverScreen(selectedProfile: _profileNotifier.selectedProfile),
-          LibraryScreen(selectedProfile: _profileNotifier.selectedProfile),
+          HomeScreen(
+            selectedProfile: _profileNotifier.selectedProfile,
+            onProfileChange: (profile) => _profileNotifier.selectProfile(profile),
+          ),
+          DiscoverScreen(
+            selectedProfile: _profileNotifier.selectedProfile,
+            onProfileChange: (profile) => _profileNotifier.selectProfile(profile),
+          ),
+          LibraryScreen(
+            selectedProfile: _profileNotifier.selectedProfile,
+            onProfileChange: (profile) => _profileNotifier.selectProfile(profile),
+          ),
           SettingsScreen(
             currentThemeMode: widget.themeMode,
             onThemeChanged: widget.onThemeChanged,
