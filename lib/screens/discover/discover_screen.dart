@@ -3,7 +3,7 @@ import '../../models/content_item.dart';
 import '../../models/enums.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
-import '../../widgets/content_card.dart';
+import '../../widgets/content_grid_card.dart';
 import '../../widgets/profile_switcher.dart';
 
 /// Discover screen - Browse and search content
@@ -237,12 +237,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           onRefresh: () async {
             setState(() {});
           },
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 0.55,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index];
-              return ContentCard(
+              return ContentGridCard(
                 item: item,
                 onChanged: () => setState(() {}),
               );
@@ -257,20 +263,28 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     List<ContentItem> items;
 
     // Apply filters: search > _selectedType > selectedProfile > all
+    // Always filter to show only "Plan to Watch" items (unstarted content to discover)
     if (_searchQuery.isNotEmpty) {
       items = await _db.searchByTitle(_searchQuery);
-      // Further filter by profile if selected
-      if (widget.selectedProfile != null) {
-        items = items
-            .where((item) => item.type == widget.selectedProfile!.contentType)
-            .toList();
-      }
+      // Filter by profile and status
+      items = items.where((item) {
+        final matchesProfile = widget.selectedProfile == null ||
+            item.type == widget.selectedProfile!.contentType;
+        final isPlanToWatch = item.status == ContentStatus.planToWatch;
+        return matchesProfile && isPlanToWatch;
+      }).toList();
     } else if (_selectedType != null) {
-      items = await _db.getContentItemsByType(_selectedType!);
+      items = await _db.getContentItemsByTypeAndStatus(
+        _selectedType!,
+        ContentStatus.planToWatch,
+      );
     } else if (widget.selectedProfile != null) {
-      items = await _db.getContentItemsByType(widget.selectedProfile!.contentType);
+      items = await _db.getContentItemsByTypeAndStatus(
+        widget.selectedProfile!.contentType,
+        ContentStatus.planToWatch,
+      );
     } else {
-      items = await _db.getAllContentItems();
+      items = await _db.getContentItemsByStatus(ContentStatus.planToWatch);
     }
 
     return items;
@@ -323,14 +337,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Content Available',
+              'Nothing to Discover',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Populate test data from Settings to get started',
+              'Content marked as "Plan to Watch" will appear here for you to discover',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey,
                   ),
@@ -343,7 +357,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 DefaultTabController.of(context).animateTo(3);
               },
               icon: const Icon(Icons.settings),
-              label: const Text('Go to Settings'),
+              label: const Text('Populate Test Data'),
             ),
           ],
         ),

@@ -3,7 +3,7 @@ import '../../models/content_item.dart';
 import '../../models/enums.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
-import '../../widgets/content_card.dart';
+import '../../widgets/content_grid_card.dart';
 import '../../widgets/profile_switcher.dart';
 
 /// Library screen - View all content in library
@@ -198,12 +198,18 @@ class _LibraryScreenState extends State<LibraryScreen>
       onRefresh: () async {
         setState(() {});
       },
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 0.55,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
-          return ContentCard(
+          return ContentGridCard(
             item: item,
             onChanged: () => setState(() {}),
           );
