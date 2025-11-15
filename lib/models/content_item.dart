@@ -39,6 +39,9 @@ class ContentItem {
   /// Optional notes
   String? notes;
 
+  /// Category (e.g., "Shonen", "Action", "Fantasy")
+  String? category;
+
   /// Constructor
   ContentItem({
     this.id = Isar.autoIncrement,
@@ -49,6 +52,7 @@ class ContentItem {
     this.total = 0,
     this.imageUrl,
     this.notes,
+    this.category,
   }) {
     createdAt = DateTime.now();
     updatedAt = DateTime.now();
