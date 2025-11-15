@@ -42,6 +42,9 @@ dependencies:
   # Path provider for database directory
   path_provider: ^2.1.4
 
+  # Google Generative AI (Gemini)
+  google_generative_ai: ^0.4.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

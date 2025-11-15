@@ -5,6 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
 import '../../widgets/profile_switcher.dart';
+import '../add/add_content_screen.dart';
 
 /// Library screen - View all content in library
 class LibraryScreen extends StatefulWidget {
@@ -127,7 +128,28 @@ class _LibraryScreenState extends State<LibraryScreen>
           _buildStatusTab(ContentStatus.dropped),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openAddContentScreen(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Content'),
+      ),
     );
+  }
+
+  Future<void> _openAddContentScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddContentScreen(
+          selectedProfile: widget.selectedProfile,
+        ),
+      ),
+    );
+
+    // Refresh if content was added
+    if (result == true && mounted) {
+      setState(() {});
+    }
   }
 
   Widget _buildAllTab() {

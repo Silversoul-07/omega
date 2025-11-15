@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/discover/discover_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../models/profile_type.dart';
 
-/// Main navigation widget with 4-tab bottom navigation
+/// Main navigation widget with 3-tab bottom navigation
 class MainNavigation extends StatefulWidget {
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeChanged;
@@ -32,10 +31,6 @@ class _MainNavigationState extends State<MainNavigation> {
       builder: (context, child) {
         final List<Widget> screens = [
           HomeScreen(
-            selectedProfile: widget.profileNotifier.selectedProfile,
-            onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
-          ),
-          DiscoverScreen(
             selectedProfile: widget.profileNotifier.selectedProfile,
             onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
@@ -67,11 +62,6 @@ class _MainNavigationState extends State<MainNavigation> {
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home),
                 label: 'Home',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.explore_outlined),
-                selectedIcon: Icon(Icons.explore),
-                label: 'Discover',
               ),
               NavigationDestination(
                 icon: Icon(Icons.library_books_outlined),

@@ -333,11 +333,11 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () {
-                // Switch to Discover tab (index 1)
+                // Switch to Library tab (index 1)
                 DefaultTabController.of(context).animateTo(1);
               },
-              icon: const Icon(Icons.explore),
-              label: const Text('Discover Content'),
+              icon: const Icon(Icons.library_books),
+              label: const Text('Go to Library'),
             ),
           ],
         ),
