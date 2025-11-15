@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/add/add_content_screen.dart';
+import '../screens/diary/diary_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../models/profile_type.dart';
 
-/// Main navigation widget with 3-tab bottom navigation
+/// Main navigation widget with 5-tab bottom navigation
 class MainNavigation extends StatefulWidget {
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeChanged;
@@ -31,6 +33,13 @@ class _MainNavigationState extends State<MainNavigation> {
       builder: (context, child) {
         final List<Widget> screens = [
           HomeScreen(
+            selectedProfile: widget.profileNotifier.selectedProfile,
+            onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
+          ),
+          AddContentScreen(
+            selectedProfile: widget.profileNotifier.selectedProfile,
+          ),
+          DiaryScreen(
             selectedProfile: widget.profileNotifier.selectedProfile,
             onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
@@ -62,6 +71,16 @@ class _MainNavigationState extends State<MainNavigation> {
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home),
                 label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.add_circle_outline),
+                selectedIcon: Icon(Icons.add_circle),
+                label: 'Add',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.auto_stories_outlined),
+                selectedIcon: Icon(Icons.auto_stories),
+                label: 'Diary',
               ),
               NavigationDestination(
                 icon: Icon(Icons.library_books_outlined),

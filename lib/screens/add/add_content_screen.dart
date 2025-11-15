@@ -6,7 +6,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import 'dart:convert';
 
-/// Add content screen with AI autofill
+/// Full-form Add content screen with AI autofill option
 class AddContentScreen extends StatefulWidget {
   final ProfileType? selectedProfile;
 
@@ -20,30 +20,52 @@ class AddContentScreen extends StatefulWidget {
 }
 
 class _AddContentScreenState extends State<AddContentScreen> {
-  final _searchController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final _db = DatabaseService();
 
-  bool _isLoading = false;
-  Map<String, dynamic>? _aiResult;
-  String? _error;
+  // Form controllers
+  late TextEditingController _titleController;
+  late TextEditingController _totalController;
+  late TextEditingController _categoryController;
+  late TextEditingController _notesController;
+
+  // Form state
+  late ContentType _selectedType;
+  late ContentStatus _selectedStatus;
+  bool _isLoadingAI = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _totalController = TextEditingController(text: '0');
+    _categoryController = TextEditingController();
+    _notesController = TextEditingController();
+    _selectedType = widget.selectedProfile?.contentType ?? ContentType.anime;
+    _selectedStatus = ContentStatus.planToWatch;
+  }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _titleController.dispose();
+    _totalController.dispose();
+    _categoryController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
-  Future<void> _searchWithAI() async {
-    if (_searchController.text.trim().isEmpty) {
-      setState(() => _error = 'Please enter a title');
+  Future<void> _autofillWithAI() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a title first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _aiResult = null;
-    });
+    setState(() => _isLoadingAI = true);
 
     try {
       // TODO: Replace with user's API key from settings
@@ -58,12 +80,11 @@ class _AddContentScreenState extends State<AddContentScreen> {
         apiKey: apiKey,
       );
 
-      final contentType = widget.selectedProfile?.contentType.displayName ?? 'content';
       final prompt = '''
 You are a content metadata assistant. Given a title, return structured JSON data about it.
 
-Title: "${_searchController.text}"
-Type: $contentType
+Title: "${_titleController.text}"
+Type: ${_selectedType.displayName}
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
@@ -104,42 +125,86 @@ Important:
 
       final parsed = jsonDecode(jsonText) as Map<String, dynamic>;
 
+      // Autofill the form
       setState(() {
-        _aiResult = parsed;
-        _isLoading = false;
+        if (parsed['title'] != null) {
+          _titleController.text = parsed['title'];
+        }
+        if (parsed['totalEpisodes'] != null) {
+          _totalController.text = parsed['totalEpisodes'].toString();
+        }
+        if (parsed['genres'] != null && (parsed['genres'] as List).isNotEmpty) {
+          _categoryController.text = (parsed['genres'] as List).join(', ');
+        }
+        if (parsed['description'] != null) {
+          _notesController.text = parsed['description'];
+        }
+        _isLoadingAI = false;
       });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✨ Autofilled with AI!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      setState(() => _isLoadingAI = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  Future<void> _addToLibrary() async {
-    if (_aiResult == null) return;
+  Future<void> _saveContent() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     try {
       final newItem = ContentItem(
-        title: _aiResult!['title'] ?? _searchController.text,
-        type: widget.selectedProfile?.contentType ?? ContentType.anime,
-        status: ContentStatus.planToWatch,
+        title: _titleController.text.trim(),
+        type: _selectedType,
+        status: _selectedStatus,
         progress: 0,
-        total: _aiResult!['totalEpisodes'] ?? 0,
-        category: (_aiResult!['genres'] as List?)?.join(', '),
-        notes: _aiResult!['description'],
+        total: int.tryParse(_totalController.text) ?? 0,
+        category: _categoryController.text.trim().isNotEmpty
+            ? _categoryController.text.trim()
+            : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
       );
 
       await _db.addContentItem(newItem);
 
       if (mounted) {
-        Navigator.pop(context, true);
+        // Clear form
+        _titleController.clear();
+        _totalController.text = '0';
+        _categoryController.clear();
+        _notesController.clear();
+        setState(() {
+          _selectedStatus = ContentStatus.planToWatch;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added "${newItem.title}" to library!'),
             backgroundColor: Colors.green,
           ),
         );
+
+        // Switch to Library tab (index 3)
+        DefaultTabController.of(context).animateTo(3);
       }
     } catch (e) {
       if (mounted) {
@@ -162,179 +227,200 @@ Important:
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        children: [
-          // Search input
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Enter title (e.g., "Attack on Titan Season 1")',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _isLoading
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.auto_awesome),
-                        onPressed: _searchWithAI,
-                        tooltip: 'Search with AI',
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title field with AI button
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Title *',
+                        hintText: 'Enter content title',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.title),
                       ),
-              ),
-              onSubmitted: (_) => _searchWithAI(),
-              enabled: !_isLoading,
-            ),
-          ),
-
-          // Error message
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Card(
-                color: Colors.red.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: TextStyle(color: Colors.red.shade700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          // AI Result
-          if (_aiResult != null)
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                          _aiResult!['title'] ?? 'Unknown',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Creator & Year
-                        if (_aiResult!['creator'] != null || _aiResult!['releaseYear'] != null)
-                          Text(
-                            [
-                              if (_aiResult!['creator'] != null) _aiResult!['creator'],
-                              if (_aiResult!['releaseYear'] != null) _aiResult!['releaseYear'].toString(),
-                            ].join(' • '),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.grey,
-                                ),
-                          ),
-                        const SizedBox(height: 16),
-
-                        // Description
-                        if (_aiResult!['description'] != null) ...[
-                          Text(
-                            _aiResult!['description'],
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Genres
-                        if (_aiResult!['genres'] != null && (_aiResult!['genres'] as List).isNotEmpty) ...[
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: (_aiResult!['genres'] as List).map((genre) {
-                              return Chip(
-                                label: Text(genre.toString()),
-                                backgroundColor: widget.selectedProfile?.color.withOpacity(0.1),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Total episodes
-                        if (_aiResult!['totalEpisodes'] != null)
-                          ListTile(
-                            leading: Icon(
-                              Icons.format_list_numbered,
-                              color: widget.selectedProfile?.color,
-                            ),
-                            title: const Text('Episodes/Chapters'),
-                            trailing: Text(
-                              _aiResult!['totalEpisodes'].toString(),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-
-                        const SizedBox(height: 24),
-
-                        // Add button
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: _addToLibrary,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add to Library'),
-                          ),
-                        ),
-                      ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Title is required';
+                        }
+                        return null;
+                      },
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: _isLoadingAI ? null : _autofillWithAI,
+                    icon: _isLoadingAI
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.auto_awesome),
+                    tooltip: 'Autofill with AI',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Type dropdown
+              DropdownButtonFormField<ContentType>(
+                value: _selectedType,
+                decoration: const InputDecoration(
+                  labelText: 'Type *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: ContentType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Row(
+                      children: [
+                        Icon(_getTypeIcon(type), size: 20),
+                        const SizedBox(width: 8),
+                        Text(type.displayName),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedType = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Status dropdown
+              DropdownButtonFormField<ContentStatus>(
+                value: _selectedStatus,
+                decoration: const InputDecoration(
+                  labelText: 'Status *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.bookmark),
+                ),
+                items: ContentStatus.values.map((status) {
+                  return DropdownMenuItem(
+                    value: status,
+                    child: Text(status.displayName),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedStatus = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Total episodes/chapters
+              TextFormField(
+                controller: _totalController,
+                decoration: const InputDecoration(
+                  labelText: 'Total Episodes/Chapters',
+                  hintText: '0 if unknown',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.format_list_numbered),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    final num = int.tryParse(value);
+                    if (num == null || num < 0) {
+                      return 'Must be a positive number';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Category/Genre
+              TextFormField(
+                controller: _categoryController,
+                decoration: const InputDecoration(
+                  labelText: 'Category/Genre',
+                  hintText: 'e.g., Action, Shonen, Fantasy',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.label),
                 ),
               ),
-            ),
+              const SizedBox(height: 20),
 
-          // Empty state
-          if (!_isLoading && _aiResult == null && _error == null)
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        size: 80,
-                        color: widget.selectedProfile?.color.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'AI-Powered Quick Add',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Enter a title and let AI autofill all the details for you',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+              // Notes/Description
+              TextFormField(
+                controller: _notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes/Description',
+                  hintText: 'Add notes or description',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.note),
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 5,
+              ),
+              const SizedBox(height: 32),
+
+              // Save button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: _saveContent,
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    'Add to Library',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
               ),
-            ),
-        ],
+              const SizedBox(height: 16),
+
+              // Help text
+              Center(
+                child: Text(
+                  '💡 Tip: Click the star icon to autofill with AI',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  IconData _getTypeIcon(ContentType type) {
+    switch (type) {
+      case ContentType.anime:
+        return Icons.animation;
+      case ContentType.comic:
+        return Icons.auto_stories;
+      case ContentType.novel:
+        return Icons.menu_book;
+      case ContentType.movie:
+        return Icons.movie;
+      case ContentType.tvSeries:
+        return Icons.tv;
+    }
   }
 }
