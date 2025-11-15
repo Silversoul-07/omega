@@ -1,74 +1,203 @@
-# Project: Content Tracker
+# Content Tracker - Flutter App v1.0
 
-This file outlines the plan and technical guidelines for building an offline-first content tracking mobile application using Flutter.
+A modern, offline-first content tracking application for Anime, Comics, Novels, Movies, and TV Series built with Flutter and Material Design 3.
 
-## High-Level Vision
+## Features
 
-- **Offline-First:** All user data is stored locally on the device. No online account is required.
-- **Content Types:** The app will track various media types including Anime, Comics, Novels, Movies, and TV Series. These are referred to as "Profiles".
-- **Core Features:** Users can add content they are consuming, track their progress (e.g., episode/chapter number), and discover items within their own library.
-- **Future Goals:** Implement a backup and restore feature using the user's Google Drive.
+### Core Functionality
+- **Multi-Profile System**: 5 dedicated profiles (Anime, Movies, Novels, TV Series, Comics)
+- **Dynamic Theming**: App theme changes based on selected profile color
+- **Content Management**: Full CRUD operations for tracking content
+- **Status Tracking**: Plan to Watch, Watching, Completed, On Hold, Dropped
+- **Progress Tracking**: Track episode/chapter/page progress with visual indicators
+- **Offline-First**: Full functionality without internet using Isar database
+- **Category/Genre System**: Tag content with multiple comma-separated genres
 
-## Technical Guidelines
+### Screens
+1. **Home**: Currently watching content (list view)
+2. **Discover**: Browse plan-to-watch content (grid view, IMDB/MAL style)
+3. **Library**: All content organized by status tabs (grid view)
+4. **Settings**: Theme toggle, statistics, data management
 
-- **Framework:** Flutter
-- **Database:** Isar (A fast, easy-to-use, and strongly-typed database for Flutter).
-- **State Management:** To be decided (will start with a simple approach).
-- **Folder Structure:** Feature-first (implemented).
+### UI/UX Highlights
+- Material Design 3 with modern typography (better readability, larger fonts)
+- Profile badges with switcher modal
+- Search and filter icons (prepared for advanced filtering)
+- Grid cards with poster-style layouts (2:3 aspect ratio)
+- List cards for active content
+- Empty states with helpful actions
+- Pull-to-refresh on all content lists
+- Floating Action Button for quick content addition
 
-## Setup Instructions
+### Technical Stack
+- **Framework**: Flutter 3.x with Material Design 3
+- **Database**: Isar (NoSQL, embedded, offline-first)
+- **State Management**: ChangeNotifier (ProfileNotifier)
+- **Architecture**:
+  - Models with Isar annotations
+  - Services layer (DatabaseService)
+  - Screens with StatefulWidget
+  - Reusable widgets
+  - Theme configuration with dynamic colors
 
-After pulling the code, run the following command to generate Isar database code:
-
-```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+### Project Structure
+```
+lib/
+├── main.dart                    # App entry point
+├── models/
+│   ├── content_item.dart        # Content data model
+│   ├── enums.dart              # ContentType, ContentStatus enums
+│   └── profile_type.dart       # ProfileType enum & ProfileNotifier
+├── screens/
+│   ├── home/
+│   │   └── home_screen.dart    # Currently watching screen
+│   ├── discover/
+│   │   ├── discover_screen.dart    # Browse plan-to-watch
+│   │   └── add_content_screen.dart # Add new content form
+│   ├── library/
+│   │   └── library_screen.dart     # All content by status
+│   └── settings/
+│       ├── settings_screen.dart    # App settings
+│       └── stats_screen.dart       # Statistics dashboard
+├── services/
+│   └── database_service.dart   # Isar database operations
+├── theme/
+│   └── app_theme.dart          # Material Design 3 theme config
+├── widgets/
+│   ├── content_card.dart       # List-style content card
+│   ├── content_grid_card.dart  # Grid-style poster card
+│   ├── main_navigation.dart    # Bottom navigation
+│   ├── profile_switcher.dart   # Profile selection modal
+│   └── profile_stats_card.dart # Statistics widget
+└── scripts/
+    └── seed_data.dart          # Test data population
 ```
 
-Then run the app:
+## Design Decisions
+
+### Profile System
+- Each profile maps to a ContentType with unique color and icon
+- ProfileNotifier at app level for reactive theme changes
+- No "All" option - always a profile selected (default: Anime)
+- Profile changes trigger filter resets
+
+### Content Model
+- Single ContentItem model for all types
+- Isar auto-increment ID
+- Timestamps: createdAt, updatedAt
+- Optional fields: imageUrl, notes, category
+- Progress tracking with automatic completion
+
+### UI/UX Philosophy
+- **Modern Typography**: Larger, more readable text with proper letter spacing
+- **Generous Spacing**: Better padding and margins for comfortable viewing
+- **Rounded Corners**: 14-16px radius for modern feel
+- **Minimal Elevations**: Flat design with subtle shadows
+- **Profile Colors**: Visual identity through dynamic theming
+- **Consistent Navigation**: Bottom nav with 72px height, 28px icons
+- **Categorize Later**: Simple genre tags (comma-separated) instead of complex taxonomy
+
+### Data Organization
+- **Home**: "Watching" status only (active content)
+- **Discover**: "Plan to Watch" status only (future content)
+- **Library**: All statuses with tab navigation
+
+## Performance Optimizations
+- Batch database writes for seed data
+- Single transaction for data operations
+- IndexedStack for tab state preservation
+- FutureBuilder with proper loading states
+- Efficient Isar queries with filters
+
+## Future Enhancements (Post-v1)
+- Advanced filter bottom sheet (multi-select genres, year range, sorting)
+- Search implementation
+- Multi-genre support (parse comma-separated values)
+- Image upload/URL support
+- Import/export functionality
+- Cloud sync (optional)
+- Widgets for home screen
+- Recommendations system
+
+## Development Commands
 
 ```bash
+# Run app
 flutter run
+
+# Build for production
+flutter build apk --release
+flutter build ios --release
+
+# Generate Isar schema (after model changes)
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# Populate test data
+# Settings → Developer → Populate Test Data
+
+# Reset all data
+# Settings → Developer → Reset All Data
 ```
 
----
+## Database Schema
 
-## Development To-Do List
+### ContentItem
+| Field | Type | Description |
+|-------|------|-------------|
+| id | int | Auto-increment primary key |
+| title | String | Content title (required) |
+| type | ContentType | Anime/Comic/Novel/Movie/TVSeries |
+| status | ContentStatus | Plan/Watching/Completed/OnHold/Dropped |
+| progress | int | Current episode/chapter/page |
+| total | int | Total episodes/chapters/pages |
+| category | String? | Genre tags (comma-separated) |
+| imageUrl | String? | Cover/poster image URL |
+| notes | String? | User notes |
+| createdAt | DateTime | Creation timestamp |
+| updatedAt | DateTime | Last update timestamp |
 
-### ~~Phase 1: Project Setup & Core Models~~ ✅
+### Enums
+- **ContentType**: anime, comic, novel, movie, tvSeries
+- **ContentStatus**: planToWatch, watching, completed, onHold, dropped
+- **ProfileType**: anime, movies, novels, tvSeries, comics
 
-- [x] ~~Initialize a new Flutter project named `content_tracker`.~~
-- [x] ~~Set up the Isar database.~~
-- [x] ~~Define the core data models for Isar:~~
-    - ~~`ContentItem`: A base class/schema with fields like `id`, `title`, `type` (enum: Anime, Comic, etc.), `status` (enum: Watching, Completed, etc.), `progress`, `total`, `imageUrl`.~~
-- [x] ~~Create a clean, scalable folder structure.~~
+## Theme Colors
 
-### ~~Phase 2: Main Navigation & UI Shell~~ ✅
+### Profiles
+- **Anime**: #2196F3 (Blue)
+- **Movies**: #F44336 (Red)
+- **Novels**: #4CAF50 (Green)
+- **TV Series**: #9C27B0 (Purple)
+- **Comics**: #FF9800 (Orange)
 
-- [x] ~~Implement the main 3-tab navigation bar: Home, Discover, Library.~~
-- [x] ~~Create placeholder pages for each tab.~~
-- [x] ~~Set up a basic app theme (colors, fonts).~~
+### Light Theme
+- Background: #FAFAFA
+- Surface: #FFFFFF
+- Text: #1A1A1A
+- Border: #E5E7EB
 
-### Phase 3: Home Tab ("Currently Watching")
+### Dark Theme
+- Background: #0A0A0A
+- Surface: #1C1C1E
+- Card: #2C2C2E
+- Text: #F5F5F5
+- Border: #374151
 
-- [ ] Implement the "Profile" switcher dropdown at the top of the Home screen.
-- [ ] Add a (currently non-functional) search bar.
-- [ ] Add filter tags (e.g., "All", "Watching", "Completed").
-- [ ] Create a `ListView` to display content items from the database that match the selected profile and filters.
-- [ ] Design the list item widget to include:
-    - Title and image.
-    - A tag for the content type.
-    - Increment/decrement buttons for the `progress` field.
-    - Display for progress (e.g., "24 / 100").
+## Contributing
 
-### Phase 4: Adding & Discovering Content
+This is a personal project. The codebase follows Flutter best practices and Material Design guidelines.
 
-- [ ] Design the "Discover" page UI:
-    - Search bar.
-    - Filter tags.
-    - `GridView` with card-style widgets for content.
-- [ ] Create a form or screen to manually add a new `ContentItem` to the database. This will likely be accessed via a floating action button on the Discover or Home page.
-- [ ] Connect the Discover page to the database to show all items of the selected profile.
+## License
 
-### Phase 5: Library Tab
+Private - All rights reserved.
 
-- [ ] Plan and design the Library tab (details to be decided later).
+## Version History
+
+### v1.0 (Current)
+- Initial release
+- Multi-profile system with dynamic theming
+- Full CRUD for content management
+- Modern Material Design 3 UI
+- Offline-first with Isar database
+- Statistics dashboard
+- Test data seed functionality
