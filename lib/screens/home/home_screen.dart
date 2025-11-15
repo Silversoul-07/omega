@@ -5,7 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
 
-/// Home screen - "Now Playing" tab
+/// Home screen - Shows currently watching content
 class HomeScreen extends StatefulWidget {
   final ProfileType? selectedProfile;
 
@@ -29,10 +29,12 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           children: [
             const Text(
-              'Now Playing',
+              'Home',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
+            _buildProfileSelector(),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildTypeDropdown(),
             ),
@@ -40,6 +42,40 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: _buildContentList(),
+    );
+  }
+
+  Widget _buildProfileSelector() {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: widget.selectedProfile?.color ?? Colors.grey,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            widget.selectedProfile?.icon ?? Icons.apps,
+            size: 16,
+            color: widget.selectedProfile?.color ?? Colors.grey,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            widget.selectedProfile?.displayName ?? 'All',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: widget.selectedProfile?.color ?? Colors.grey,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

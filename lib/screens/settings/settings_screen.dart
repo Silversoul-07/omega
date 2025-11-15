@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../scripts/seed_data.dart';
+import '../../services/database_service.dart';
 
 /// Settings screen with theme and other preferences
 class SettingsScreen extends StatelessWidget {
@@ -32,6 +33,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _buildSectionHeader(context, 'Developer'),
           _buildSeedDataTile(context),
+          _buildResetDataTile(context),
         ],
       ),
     );
@@ -113,6 +115,22 @@ class SettingsScreen extends StatelessWidget {
         subtitle: const Text('Add sample content for testing'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => _showSeedDataDialog(context),
+      ),
+    );
+  }
+
+  Widget _buildResetDataTile(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: Icon(
+          Icons.delete_forever,
+          color: Colors.red,
+        ),
+        title: const Text('Reset All Data'),
+        subtitle: const Text('Clear all content from database'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _showResetDataDialog(context),
       ),
     );
   }
@@ -268,6 +286,93 @@ class SettingsScreen extends StatelessWidget {
         return 'Dark';
       case ThemeMode.system:
         return 'System';
+    }
+  }
+
+  void _showResetDataDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Reset All Data'),
+          content: const Text(
+            'This will permanently delete all content from your database.\n\nThis action cannot be undone. Continue?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                _resetData(context);
+              },
+              child: const Text('Reset'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _resetData(BuildContext context) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Clearing database...'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final db = DatabaseService();
+      final isar = await db.isar;
+      await isar.writeTxn(() async {
+        await isar.contentItems.clear();
+      });
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ All data has been cleared'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 }
