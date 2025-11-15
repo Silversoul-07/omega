@@ -5,6 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
 import '../../widgets/profile_switcher.dart';
+import '../../widgets/profile_stats_card.dart';
 
 /// Library screen - View all content in library
 class LibraryScreen extends StatefulWidget {
@@ -117,14 +118,21 @@ class _LibraryScreenState extends State<LibraryScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildAllTab(),
-          _buildStatusTab(ContentStatus.completed),
-          _buildStatusTab(ContentStatus.planToWatch),
-          _buildStatusTab(ContentStatus.onHold),
-          _buildStatusTab(ContentStatus.dropped),
+          ProfileStatsCard(selectedProfile: widget.selectedProfile),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAllTab(),
+                _buildStatusTab(ContentStatus.completed),
+                _buildStatusTab(ContentStatus.planToWatch),
+                _buildStatusTab(ContentStatus.onHold),
+                _buildStatusTab(ContentStatus.dropped),
+              ],
+            ),
+          ),
         ],
       ),
     );

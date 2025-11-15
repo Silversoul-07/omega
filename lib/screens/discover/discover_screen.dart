@@ -5,6 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
 import '../../widgets/profile_switcher.dart';
+import 'add_content_screen.dart';
 
 /// Discover screen - Browse and search content
 class DiscoverScreen extends StatefulWidget {
@@ -31,6 +32,22 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openAddContentScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddContentScreen(
+          selectedProfile: widget.selectedProfile,
+        ),
+      ),
+    );
+
+    // Refresh if content was added
+    if (result == true && mounted) {
+      setState(() {});
+    }
   }
 
   Widget _buildProfileBadge() {
@@ -116,6 +133,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             child: _buildContentList(),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openAddContentScreen(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Content'),
+        tooltip: 'Add new content to library',
       ),
     );
   }
