@@ -9,11 +9,13 @@ import '../models/profile_type.dart';
 class MainNavigation extends StatefulWidget {
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeChanged;
+  final ProfileNotifier profileNotifier;
 
   const MainNavigation({
     super.key,
     required this.themeMode,
     required this.onThemeChanged,
+    required this.profileNotifier,
   });
 
   @override
@@ -22,36 +24,29 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
-  final ProfileNotifier _profileNotifier = ProfileNotifier()
-    ..selectProfile(ProfileType.anime);
-
-  @override
-  void dispose() {
-    _profileNotifier.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _profileNotifier,
+      animation: widget.profileNotifier,
       builder: (context, child) {
         final List<Widget> screens = [
           HomeScreen(
-            selectedProfile: _profileNotifier.selectedProfile,
-            onProfileChange: (profile) => _profileNotifier.selectProfile(profile),
+            selectedProfile: widget.profileNotifier.selectedProfile,
+            onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
           DiscoverScreen(
-            selectedProfile: _profileNotifier.selectedProfile,
-            onProfileChange: (profile) => _profileNotifier.selectProfile(profile),
+            selectedProfile: widget.profileNotifier.selectedProfile,
+            onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
           LibraryScreen(
-            selectedProfile: _profileNotifier.selectedProfile,
-            onProfileChange: (profile) => _profileNotifier.selectProfile(profile),
+            selectedProfile: widget.profileNotifier.selectedProfile,
+            onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
           SettingsScreen(
             currentThemeMode: widget.themeMode,
             onThemeChanged: widget.onThemeChanged,
+            selectedProfile: widget.profileNotifier.selectedProfile,
           ),
         ];
 

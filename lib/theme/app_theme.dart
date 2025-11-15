@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// App theme configuration using Material Design
 class AppTheme {
-  // Primary colors
-  static const Color primaryColor = Color(0xFF6366F1); // Indigo
+  // Default primary colors
+  static const Color defaultPrimaryColor = Color(0xFF6366F1); // Indigo
   static const Color secondaryColor = Color(0xFF8B5CF6); // Purple
   static const Color accentColor = Color(0xFF10B981); // Green
 
@@ -17,12 +17,14 @@ class AppTheme {
   static const Color darkSurfaceColor = Color(0xFF1A1A1A); // Slightly elevated black
   static const Color darkCardColor = Color(0xFF2A2A2A); // Card elevation
 
-  /// Light theme
-  static ThemeData get lightTheme {
+  /// Light theme with optional dynamic primary color
+  static ThemeData lightTheme([Color? primaryColor]) {
+    final primary = primaryColor ?? defaultPrimaryColor;
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
+        seedColor: primary,
         secondary: secondaryColor,
         brightness: Brightness.light,
       ),
@@ -43,13 +45,13 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
         backgroundColor: surfaceColor,
-        indicatorColor: primaryColor.withOpacity(0.15),
+        indicatorColor: primary.withOpacity(0.15),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
+            return TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: primaryColor,
+              color: primary,
             );
           }
           return const TextStyle(
@@ -59,15 +61,15 @@ class AppTheme {
           );
         }),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 4,
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: primaryColor.withOpacity(0.1),
-        labelStyle: const TextStyle(
-          color: primaryColor,
+        backgroundColor: primary.withOpacity(0.1),
+        labelStyle: TextStyle(
+          color: primary,
           fontWeight: FontWeight.w500,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -88,13 +90,13 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -105,19 +107,21 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: primary,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),
     );
   }
 
-  /// Dark theme
-  static ThemeData get darkTheme {
+  /// Dark theme with optional dynamic primary color
+  static ThemeData darkTheme([Color? primaryColor]) {
+    final primary = primaryColor ?? defaultPrimaryColor;
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
+        seedColor: primary,
         secondary: secondaryColor,
         brightness: Brightness.dark,
       ),
@@ -138,13 +142,13 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
         backgroundColor: darkSurfaceColor,
-        indicatorColor: primaryColor.withOpacity(0.25),
+        indicatorColor: primary.withOpacity(0.25),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
+            return TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: primaryColor,
+              color: primary,
             );
           }
           return const TextStyle(
@@ -154,15 +158,15 @@ class AppTheme {
           );
         }),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 4,
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: primaryColor.withOpacity(0.2),
-        labelStyle: const TextStyle(
-          color: Color(0xFFA5B4FC),
+        backgroundColor: primary.withOpacity(0.2),
+        labelStyle: TextStyle(
+          color: primary.withOpacity(0.8),
           fontWeight: FontWeight.w500,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -183,13 +187,13 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -200,7 +204,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
+          foregroundColor: primary,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),

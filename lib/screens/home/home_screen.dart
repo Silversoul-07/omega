@@ -5,7 +5,6 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
 import '../../widgets/profile_switcher.dart';
-import '../../widgets/profile_stats_card.dart';
 
 /// Home screen - Shows currently watching content
 class HomeScreen extends StatefulWidget {
@@ -49,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildCategoryFilter(),
-          ProfileStatsCard(selectedProfile: widget.selectedProfile),
           Expanded(child: _buildContentList()),
         ],
       ),

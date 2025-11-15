@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import '../../models/profile_type.dart';
 import '../../scripts/seed_data.dart';
 import '../../services/database_service.dart';
+import 'stats_screen.dart';
 
 /// Settings screen with theme and other preferences
 class SettingsScreen extends StatelessWidget {
   final ThemeMode currentThemeMode;
   final ValueChanged<ThemeMode> onThemeChanged;
+  final ProfileType? selectedProfile;
 
   const SettingsScreen({
     super.key,
     required this.currentThemeMode,
     required this.onThemeChanged,
+    this.selectedProfile,
   });
 
   @override
@@ -25,6 +29,9 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         children: [
           const SizedBox(height: 8),
+          _buildSectionHeader(context, 'Library'),
+          _buildStatsTile(context),
+          const SizedBox(height: 16),
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeOption(context),
           const SizedBox(height: 16),
@@ -48,6 +55,31 @@ class SettingsScreen extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
+      ),
+    );
+  }
+
+  Widget _buildStatsTile(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: Icon(
+          Icons.analytics,
+          color: selectedProfile?.color ?? Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text('Statistics'),
+        subtitle: Text('View ${selectedProfile?.displayName ?? 'library'} stats'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StatsScreen(
+                selectedProfile: selectedProfile,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
