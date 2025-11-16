@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/content_item.dart';
+import '../../models/custom_list.dart';
 import '../../models/enums.dart';
 import '../../services/database_service.dart';
 
@@ -115,6 +116,11 @@ class _ContentDetailsScreenState extends State<ContentDetailsScreen> {
           ),
           onPressed: _toggleFavourite,
           tooltip: _item.isFavourite ? 'Remove from favourites' : 'Add to favourites',
+        ),
+        IconButton(
+          icon: const Icon(Icons.playlist_add),
+          onPressed: _showAddToListDialog,
+          tooltip: 'Add to list',
         ),
         IconButton(
           icon: Icon(_isEditing ? Icons.close : Icons.edit),
@@ -671,5 +677,205 @@ class _ContentDetailsScreenState extends State<ContentDetailsScreen> {
         }
       }
     }
+  }
+
+  Future<void> _showAddToListDialog() async {
+    try {
+      // Fetch all available lists
+      final allLists = await _db.getAllLists();
+
+      if (allLists.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No lists available. Create a list in the Library tab first!'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Fetch which lists currently contain this content
+      final listsContainingContent = await _db.getListsContainingContent(_item.id);
+      final selectedListIds = listsContainingContent.map((list) => list.id).toSet();
+
+      if (!mounted) return;
+
+      // Show dialog
+      final result = await showDialog<Set<int>>(
+        context: context,
+        builder: (context) => _AddToListDialog(
+          allLists: allLists,
+          initialSelectedIds: selectedListIds,
+          contentTitle: _item.title,
+        ),
+      );
+
+      // Update database based on user selection
+      if (result != null && mounted) {
+        final listsToAdd = result.difference(selectedListIds);
+        final listsToRemove = selectedListIds.difference(result);
+
+        // Add to new lists
+        for (final listId in listsToAdd) {
+          await _db.addContentToList(listId, _item.id);
+        }
+
+        // Remove from deselected lists
+        for (final listId in listsToRemove) {
+          await _db.removeContentFromList(listId, _item.id);
+        }
+
+        if (mounted) {
+          final addedCount = listsToAdd.length;
+          final removedCount = listsToRemove.length;
+
+          String message;
+          if (addedCount > 0 && removedCount > 0) {
+            message = 'Added to $addedCount list(s), removed from $removedCount list(s)';
+          } else if (addedCount > 0) {
+            message = 'Added to $addedCount list(s)';
+          } else if (removedCount > 0) {
+            message = 'Removed from $removedCount list(s)';
+          } else {
+            message = 'No changes made';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+}
+
+/// Dialog for selecting which lists to add content to
+class _AddToListDialog extends StatefulWidget {
+  final List<CustomList> allLists;
+  final Set<int> initialSelectedIds;
+  final String contentTitle;
+
+  const _AddToListDialog({
+    required this.allLists,
+    required this.initialSelectedIds,
+    required this.contentTitle,
+  });
+
+  @override
+  State<_AddToListDialog> createState() => _AddToListDialogState();
+}
+
+class _AddToListDialogState extends State<_AddToListDialog> {
+  late Set<int> _selectedIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIds = Set.from(widget.initialSelectedIds);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add to Lists'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select lists for "${widget.contentTitle}"',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey.shade700,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: widget.allLists.length,
+                itemBuilder: (context, index) {
+                  final list = widget.allLists[index];
+                  final isSelected = _selectedIds.contains(list.id);
+
+                  return CheckboxListTile(
+                    value: isSelected,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedIds.add(list.id);
+                        } else {
+                          _selectedIds.remove(list.id);
+                        }
+                      });
+                    },
+                    title: Row(
+                      children: [
+                        Text(
+                          list.icon ?? '📚',
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            list.name,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: list.description != null
+                        ? Text(
+                            list.description!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : null,
+                    secondary: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${list.itemCount}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _selectedIds),
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }

@@ -45,6 +45,9 @@ dependencies:
   # Google Generative AI (Gemini)
   google_generative_ai: ^0.4.6
 
+  # Share functionality for exporting lists
+  share_plus: ^10.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
