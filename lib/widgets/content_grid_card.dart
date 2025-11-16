@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/content_item.dart';
 import '../models/enums.dart';
-import '../services/database_service.dart';
+import '../screens/content_details/content_details_screen.dart';
 
 /// IMDB/MAL style grid card for content items
 class ContentGridCard extends StatelessWidget {
@@ -29,8 +29,8 @@ class ContentGridCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Poster/Cover image
-            AspectRatio(
-              aspectRatio: 2 / 3,
+            Expanded(
+              flex: 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -124,6 +124,7 @@ class ContentGridCard extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     item.title,
@@ -226,211 +227,17 @@ class ContentGridCard extends StatelessWidget {
     }
   }
 
-  void _showDetailsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _ContentDetailsDialog(
-          item: item,
-          onChanged: onChanged,
-        );
-      },
-    );
-  }
-}
-
-/// Dialog for viewing and editing content item details
-class _ContentDetailsDialog extends StatefulWidget {
-  final ContentItem item;
-  final VoidCallback? onChanged;
-
-  const _ContentDetailsDialog({
-    required this.item,
-    this.onChanged,
-  });
-
-  @override
-  State<_ContentDetailsDialog> createState() => _ContentDetailsDialogState();
-}
-
-class _ContentDetailsDialogState extends State<_ContentDetailsDialog> {
-  late int _currentProgress;
-  late ContentStatus _currentStatus;
-  final _db = DatabaseService();
-
-  @override
-  void initState() {
-    super.initState();
-    _currentProgress = widget.item.progress;
-    _currentStatus = widget.item.status;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.item.title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+  void _showDetailsDialog(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ContentDetailsScreen(item: item),
       ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Type, Category, and Status
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Chip(
-                  label: Text(widget.item.type.displayName),
-                  avatar: Icon(
-                    _getTypeIcon(widget.item.type),
-                    size: 16,
-                  ),
-                ),
-                if (widget.item.category != null &&
-                    widget.item.category!.isNotEmpty)
-                  Chip(
-                    label: Text(widget.item.category!),
-                    backgroundColor: Colors.teal.withOpacity(0.1),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<ContentStatus>(
-              value: _currentStatus,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: ContentStatus.values.map((status) {
-                return DropdownMenuItem(
-                  value: status,
-                  child: Text(status.displayName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _currentStatus = value);
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            // Progress
-            Text(
-              'Progress: $_currentProgress / ${widget.item.total}',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            Slider(
-              value: _currentProgress.toDouble(),
-              min: 0,
-              max: widget.item.total.toDouble(),
-              divisions: widget.item.total > 0 ? widget.item.total : 1,
-              label: _currentProgress.toString(),
-              onChanged: (value) {
-                setState(() => _currentProgress = value.toInt());
-              },
-            ),
-            const SizedBox(height: 8),
-            // Notes
-            if (widget.item.notes != null && widget.item.notes!.isNotEmpty) ...[
-              Text(
-                'Notes:',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.item.notes!,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-            ],
-            // Dates
-            Text(
-              'Added: ${_formatDate(widget.item.createdAt)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                  ),
-            ),
-            if (widget.item.createdAt != widget.item.updatedAt)
-              Text(
-                'Updated: ${_formatDate(widget.item.updatedAt)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
-              ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => _saveChanges(context),
-          child: const Text('Save'),
-        ),
-      ],
     );
-  }
 
-  IconData _getTypeIcon(ContentType type) {
-    switch (type) {
-      case ContentType.anime:
-        return Icons.animation;
-      case ContentType.comic:
-        return Icons.auto_stories;
-      case ContentType.novel:
-        return Icons.menu_book;
-      case ContentType.movie:
-        return Icons.movie;
-      case ContentType.tvSeries:
-        return Icons.tv;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  Future<void> _saveChanges(BuildContext context) async {
-    try {
-      final updatedItem = widget.item
-        ..progress = _currentProgress
-        ..status = _currentStatus
-        ..updatedAt = DateTime.now();
-
-      // Auto-complete if progress reaches total
-      if (updatedItem.total > 0 && updatedItem.progress >= updatedItem.total) {
-        updatedItem.status = ContentStatus.completed;
-      }
-
-      await _db.updateContentItem(updatedItem);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onChanged?.call();
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    // Refresh if content was updated
+    if (result == true) {
+      onChanged?.call();
     }
   }
 }

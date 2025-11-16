@@ -4,7 +4,7 @@ import '../../models/enums.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
-import '../../widgets/profile_switcher.dart';
+import '../../widgets/profile_selector_button.dart';
 
 /// Home screen - Shows currently watching content
 class HomeScreen extends StatefulWidget {
@@ -37,10 +37,16 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 12),
-            _buildProfileSelector(),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTypeDropdown(),
+            ProfileSelectorButton(
+              selectedProfile: widget.selectedProfile,
+              onProfileChange: widget.onProfileChange,
+              onChanged: () {
+                // Reset filters when profile changes
+                setState(() {
+                  _selectedType = null;
+                  _selectedCategory = null;
+                });
+              },
             ),
           ],
         ),
@@ -51,105 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(child: _buildContentList()),
         ],
       ),
-    );
-  }
-
-  Widget _buildProfileSelector() {
-    return GestureDetector(
-      onTap: () async {
-        if (widget.selectedProfile != null) {
-          final newProfile = await ProfileSwitcher.show(
-            context,
-            widget.selectedProfile!,
-          );
-          if (newProfile != null) {
-            widget.onProfileChange(newProfile);
-            // Reset filters when profile changes
-            setState(() {
-              _selectedType = null;
-              _selectedCategory = null;
-            });
-          }
-        }
-      },
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.selectedProfile?.color ?? Colors.grey,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.selectedProfile?.icon ?? Icons.apps,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              widget.selectedProfile?.displayName ?? 'All',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: widget.selectedProfile?.color ?? Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTypeDropdown() {
-    return DropdownButton<ContentType?>(
-      value: _selectedType,
-      isExpanded: true,
-      underline: Container(),
-      hint: const Text('All Types'),
-      items: [
-        const DropdownMenuItem<ContentType?>(
-          value: null,
-          child: Text('All Types'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.anime,
-          child: Text('Anime'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.comic,
-          child: Text('Comics'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.novel,
-          child: Text('Novels'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.movie,
-          child: Text('Movies'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.tvSeries,
-          child: Text('TV Series'),
-        ),
-      ],
-      onChanged: (value) {
-        setState(() {
-          _selectedType = value;
-          _selectedCategory = null; // Reset category when type changes
-        });
-      },
     );
   }
 
@@ -333,11 +240,11 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () {
-                // Switch to Discover tab (index 1)
+                // Switch to Library tab (index 1)
                 DefaultTabController.of(context).animateTo(1);
               },
-              icon: const Icon(Icons.explore),
-              label: const Text('Discover Content'),
+              icon: const Icon(Icons.library_books),
+              label: const Text('Go to Library'),
             ),
           ],
         ),

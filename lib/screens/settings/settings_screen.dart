@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../../models/profile_type.dart';
 import '../../models/content_item.dart';
+import '../../models/custom_list.dart';
+import '../../models/enums.dart';
 import '../../scripts/seed_data.dart';
 import '../../services/database_service.dart';
 import 'stats_screen.dart';
@@ -32,6 +35,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _buildSectionHeader(context, 'Library'),
           _buildStatsTile(context),
+          _buildImportListTile(context),
           const SizedBox(height: 16),
           _buildSectionHeader(context, 'Appearance'),
           _buildThemeOption(context),
@@ -81,6 +85,22 @@ class SettingsScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildImportListTile(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: Icon(
+          Icons.download,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: const Text('Import List'),
+        subtitle: const Text('Import a list from JSON'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _showImportDialog(context),
       ),
     );
   }
@@ -401,6 +421,218 @@ class SettingsScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImportDialog(BuildContext context) {
+    final jsonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Import List from JSON'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Paste the exported JSON data below:',
+                  style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade700,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: jsonController,
+                  maxLines: 10,
+                  decoration: InputDecoration(
+                    hintText: '{\n  "app": "Content Tracker",\n  "version": "1.0",\n  ...\n}',
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                  ),
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '💡 Tip: Export a list from the Library tab to get the JSON format',
+                  style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                jsonController.dispose();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final jsonString = jsonController.text.trim();
+                jsonController.dispose();
+                Navigator.pop(dialogContext);
+
+                if (jsonString.isNotEmpty) {
+                  await _importList(context, jsonString);
+                }
+              },
+              child: const Text('Import'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _importList(BuildContext context, String jsonString) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Importing list...'),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      // Parse JSON
+      final Map<String, dynamic> data = jsonDecode(jsonString);
+
+      // Validate format
+      if (data['app'] != 'Content Tracker') {
+        throw Exception('Invalid JSON format: not a Content Tracker export');
+      }
+
+      final String listName = data['list_name'] ?? 'Imported List';
+      final String? listDescription = data['list_description'];
+      final String? listIcon = data['list_icon'];
+      final List<dynamic> itemsData = data['items'] ?? [];
+
+      final db = DatabaseService();
+
+      // Create the list
+      final allLists = await db.getAllLists();
+      final newOrder = allLists.isEmpty
+          ? 0
+          : allLists.map((l) => l.order).reduce((a, b) => a > b ? a : b) + 1;
+
+      final newList = CustomList(
+        name: listName,
+        description: listDescription,
+        icon: listIcon ?? '📚',
+        order: newOrder,
+      );
+
+      await db.createList(newList);
+
+      // Import content items
+      int importedCount = 0;
+      int skippedCount = 0;
+
+      for (final itemData in itemsData) {
+        try {
+          final String title = itemData['title'] ?? 'Untitled';
+          final String typeStr = itemData['type'] ?? 'anime';
+          final String statusStr = itemData['status'] ?? 'planToWatch';
+          final int progress = itemData['progress'] ?? 0;
+          final int total = itemData['total'] ?? 0;
+          final String? category = itemData['category'];
+          final String? notes = itemData['notes'];
+
+          // Parse enums
+          ContentType? type;
+          try {
+            type = ContentType.values.firstWhere(
+              (e) => e.toString().split('.').last == typeStr,
+            );
+          } catch (_) {
+            type = ContentType.anime; // Default fallback
+          }
+
+          ContentStatus? status;
+          try {
+            status = ContentStatus.values.firstWhere(
+              (e) => e.toString().split('.').last == statusStr,
+            );
+          } catch (_) {
+            status = ContentStatus.planToWatch; // Default fallback
+          }
+
+          // Create content item
+          final contentItem = ContentItem(
+            title: title,
+            type: type,
+            status: status,
+            progress: progress,
+            total: total,
+            category: category,
+            notes: notes,
+          );
+
+          await db.addContentItem(contentItem);
+
+          // Add to the new list
+          await db.addContentToList(newList.id, contentItem.id);
+
+          importedCount++;
+        } catch (e) {
+          skippedCount++;
+          debugPrint('Error importing item: $e');
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Imported "$listName" with $importedCount items' +
+                  (skippedCount > 0 ? ' ($skippedCount skipped)' : ''),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Import failed: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),

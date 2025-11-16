@@ -31,14 +31,23 @@ class ProfileSwitcher {
                 ),
               ),
               const SizedBox(height: 16),
-              ...ProfileType.values.map((profile) {
-                final isSelected = profile == currentProfile;
-                return _ProfileOption(
-                  profile: profile,
-                  isSelected: isSelected,
-                  onTap: () => Navigator.pop(context, profile),
-                );
-              }),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...ProfileType.values.map((profile) {
+                        final isSelected = profile == currentProfile;
+                        return _ProfileOption(
+                          profile: profile,
+                          isSelected: isSelected,
+                          onTap: () => Navigator.pop(context, profile),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 8),
             ],
           ),

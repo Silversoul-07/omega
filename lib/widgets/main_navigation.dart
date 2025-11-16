@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/discover/discover_screen.dart';
+import '../screens/shelves/shelves_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../models/profile_type.dart';
 
-/// Main navigation widget with 4-tab bottom navigation
+/// Main navigation widget with 4-tab bottom navigation + FAB
 class MainNavigation extends StatefulWidget {
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeChanged;
@@ -35,7 +35,7 @@ class _MainNavigationState extends State<MainNavigation> {
             selectedProfile: widget.profileNotifier.selectedProfile,
             onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
-          DiscoverScreen(
+          ShelvesScreen(
             selectedProfile: widget.profileNotifier.selectedProfile,
             onProfileChange: (profile) => widget.profileNotifier.selectProfile(profile),
           ),
@@ -69,13 +69,13 @@ class _MainNavigationState extends State<MainNavigation> {
                 label: 'Home',
               ),
               NavigationDestination(
-                icon: Icon(Icons.explore_outlined),
-                selectedIcon: Icon(Icons.explore),
-                label: 'Discover',
+                icon: Icon(Icons.view_list_outlined),
+                selectedIcon: Icon(Icons.view_list),
+                label: 'Shelves',
               ),
               NavigationDestination(
-                icon: Icon(Icons.library_books_outlined),
-                selectedIcon: Icon(Icons.library_books),
+                icon: Icon(Icons.favorite_outline),
+                selectedIcon: Icon(Icons.favorite),
                 label: 'Library',
               ),
               NavigationDestination(
