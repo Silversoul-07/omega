@@ -5,6 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
 import '../../widgets/profile_switcher.dart';
+import '../add/add_content_screen.dart';
 
 /// Library screen - View all content in library
 class LibraryScreen extends StatefulWidget {
@@ -109,7 +110,6 @@ class _LibraryScreenState extends State<LibraryScreen>
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(text: 'All'),
             Tab(text: 'Completed'),
             Tab(text: 'Plan to Watch'),
             Tab(text: 'On Hold'),
@@ -120,46 +120,37 @@ class _LibraryScreenState extends State<LibraryScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildAllTab(),
           _buildStatusTab(ContentStatus.completed),
           _buildStatusTab(ContentStatus.planToWatch),
           _buildStatusTab(ContentStatus.onHold),
           _buildStatusTab(ContentStatus.dropped),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openAddContentScreen(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Content'),
+      ),
     );
   }
 
-  Widget _buildAllTab() {
-    return FutureBuilder<List<ContentItem>>(
-      future: widget.selectedProfile == null
-          ? _db.getAllContentItems()
-          : _db.getContentItemsByType(widget.selectedProfile!.contentType),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
-        }
-
-        final items = snapshot.data ?? [];
-
-        if (items.isEmpty) {
-          return _buildEmptyState(
-            icon: Icons.library_books_outlined,
-            title: 'No Content Yet',
-            subtitle: 'Add some content from the Discover tab or use Settings to populate test data',
-          );
-        }
-
-        return _buildContentList(items);
-      },
+  Future<void> _openAddContentScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddContentScreen(
+          selectedProfile: widget.selectedProfile,
+        ),
+      ),
     );
+
+    // Refresh if content was added
+    if (result == true && mounted) {
+      setState(() {});
+    }
   }
+
+  
 
   Widget _buildStatusTab(ContentStatus status) {
     return FutureBuilder<List<ContentItem>>(

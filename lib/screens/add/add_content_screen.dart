@@ -69,14 +69,14 @@ class _AddContentScreenState extends State<AddContentScreen> {
 
     try {
       // TODO: Replace with user's API key from settings
-      const apiKey = 'YOUR_GEMINI_API_KEY_HERE';
+      const apiKey = 'AIzaSyBTkAegcUu8FFXsIGbARLFmZ4VH9ot8wAg';
 
       if (apiKey == 'YOUR_GEMINI_API_KEY_HERE') {
         throw Exception('Please add your Gemini API key in Settings');
       }
 
       final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         apiKey: apiKey,
       );
 

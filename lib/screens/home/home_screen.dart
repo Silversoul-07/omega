@@ -30,16 +30,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Home',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            const Text(
+              'Home',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 12),
+            _buildProfileSelector(),
+            const SizedBox(width: 12),
+          ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: _buildTypeDropdown(),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -50,53 +51,65 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTypeDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: DropdownButton<ContentType?>(
-        value: _selectedType,
-        underline: Container(),
-        hint: const Text('Filter'),
-        icon: const Icon(Icons.filter_list, size: 18),
-        items: [
-          const DropdownMenuItem<ContentType?>(
-            value: null,
-            child: Text('All Types'),
+  Widget _buildProfileSelector() {
+    return GestureDetector(
+      onTap: () async {
+        if (widget.selectedProfile != null) {
+          final newProfile = await ProfileSwitcher.show(
+            context,
+            widget.selectedProfile!,
+          );
+          if (newProfile != null) {
+            widget.onProfileChange(newProfile);
+            // Reset filters when profile changes
+            setState(() {
+              _selectedType = null;
+              _selectedCategory = null;
+            });
+          }
+        }
+      },
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: widget.selectedProfile?.color ?? Colors.grey,
+            width: 1.5,
           ),
-          const DropdownMenuItem<ContentType?>(
-            value: ContentType.anime,
-            child: Text('Anime'),
-          ),
-          const DropdownMenuItem<ContentType?>(
-            value: ContentType.comic,
-            child: Text('Comics'),
-          ),
-          const DropdownMenuItem<ContentType?>(
-            value: ContentType.novel,
-            child: Text('Novels'),
-          ),
-          const DropdownMenuItem<ContentType?>(
-            value: ContentType.movie,
-            child: Text('Movies'),
-          ),
-          const DropdownMenuItem<ContentType?>(
-            value: ContentType.tvSeries,
-            child: Text('TV Series'),
-          ),
-        ],
-        onChanged: (value) {
-          setState(() {
-            _selectedType = value;
-            _selectedCategory = null; // Reset category when type changes
-          });
-        },
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              widget.selectedProfile?.icon ?? Icons.apps,
+              size: 16,
+              color: widget.selectedProfile?.color ?? Colors.grey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              widget.selectedProfile?.displayName ?? 'All',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: widget.selectedProfile?.color ?? Colors.grey,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: widget.selectedProfile?.color ?? Colors.grey,
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  
 
   Widget _buildCategoryFilter() {
     return FutureBuilder<List<ContentItem>>(
@@ -278,8 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () {
-                // Switch to Library tab (index 3)
-                DefaultTabController.of(context).animateTo(3);
+                // Switch to Library tab (index 1)
+                DefaultTabController.of(context).animateTo(1);
               },
               icon: const Icon(Icons.library_books),
               label: const Text('Go to Library'),
