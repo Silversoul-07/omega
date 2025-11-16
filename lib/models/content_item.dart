@@ -42,6 +42,9 @@ class ContentItem {
   /// Category (e.g., "Shonen", "Action", "Fantasy")
   String? category;
 
+  /// Whether this item is marked as favourite
+  late bool isFavourite;
+
   /// Constructor
   ContentItem({
     this.id = Isar.autoIncrement,
@@ -53,6 +56,7 @@ class ContentItem {
     this.imageUrl,
     this.notes,
     this.category,
+    this.isFavourite = false,
   }) {
     createdAt = DateTime.now();
     updatedAt = DateTime.now();

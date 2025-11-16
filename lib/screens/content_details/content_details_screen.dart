@@ -109,6 +109,14 @@ class _ContentDetailsScreenState extends State<ContentDetailsScreen> {
       ),
       actions: [
         IconButton(
+          icon: Icon(
+            _item.isFavourite ? Icons.favorite : Icons.favorite_border,
+            color: _item.isFavourite ? Colors.red : null,
+          ),
+          onPressed: _toggleFavourite,
+          tooltip: _item.isFavourite ? 'Remove from favourites' : 'Add to favourites',
+        ),
+        IconButton(
           icon: Icon(_isEditing ? Icons.close : Icons.edit),
           onPressed: () {
             setState(() {
@@ -568,6 +576,43 @@ class _ContentDetailsScreenState extends State<ContentDetailsScreen> {
           ),
         );
         Navigator.pop(context, true); // Return true to indicate update
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleFavourite() async {
+    try {
+      final updatedItem = _item
+        ..isFavourite = !_item.isFavourite
+        ..updatedAt = DateTime.now();
+
+      await _db.updateContentItem(updatedItem);
+
+      setState(() {
+        _item = updatedItem;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _item.isFavourite
+                  ? 'Added to favourites'
+                  : 'Removed from favourites',
+            ),
+            duration: const Duration(seconds: 1),
+            backgroundColor: _item.isFavourite ? Colors.red : Colors.grey,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
