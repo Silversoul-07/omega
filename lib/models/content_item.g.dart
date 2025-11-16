@@ -37,50 +37,55 @@ const ContentItemSchema = CollectionSchema(
       name: r'isCompleted',
       type: IsarType.bool,
     ),
-    r'notes': PropertySchema(
+    r'isFavourite': PropertySchema(
       id: 4,
+      name: r'isFavourite',
+      type: IsarType.bool,
+    ),
+    r'notes': PropertySchema(
+      id: 5,
       name: r'notes',
       type: IsarType.string,
     ),
     r'progress': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'progress',
       type: IsarType.long,
     ),
     r'progressDisplay': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'progressDisplay',
       type: IsarType.string,
     ),
     r'progressPercentage': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'progressPercentage',
       type: IsarType.double,
     ),
     r'status': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'status',
       type: IsarType.string,
       enumMap: _ContentItemstatusEnumValueMap,
     ),
     r'title': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'title',
       type: IsarType.string,
     ),
     r'total': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'total',
       type: IsarType.long,
     ),
     r'type': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'type',
       type: IsarType.string,
       enumMap: _ContentItemtypeEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -154,15 +159,16 @@ void _contentItemSerialize(
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.imageUrl);
   writer.writeBool(offsets[3], object.isCompleted);
-  writer.writeString(offsets[4], object.notes);
-  writer.writeLong(offsets[5], object.progress);
-  writer.writeString(offsets[6], object.progressDisplay);
-  writer.writeDouble(offsets[7], object.progressPercentage);
-  writer.writeString(offsets[8], object.status.name);
-  writer.writeString(offsets[9], object.title);
-  writer.writeLong(offsets[10], object.total);
-  writer.writeString(offsets[11], object.type.name);
-  writer.writeDateTime(offsets[12], object.updatedAt);
+  writer.writeBool(offsets[4], object.isFavourite);
+  writer.writeString(offsets[5], object.notes);
+  writer.writeLong(offsets[6], object.progress);
+  writer.writeString(offsets[7], object.progressDisplay);
+  writer.writeDouble(offsets[8], object.progressPercentage);
+  writer.writeString(offsets[9], object.status.name);
+  writer.writeString(offsets[10], object.title);
+  writer.writeLong(offsets[11], object.total);
+  writer.writeString(offsets[12], object.type.name);
+  writer.writeDateTime(offsets[13], object.updatedAt);
 }
 
 ContentItem _contentItemDeserialize(
@@ -175,18 +181,19 @@ ContentItem _contentItemDeserialize(
     category: reader.readStringOrNull(offsets[0]),
     id: id,
     imageUrl: reader.readStringOrNull(offsets[2]),
-    notes: reader.readStringOrNull(offsets[4]),
-    progress: reader.readLongOrNull(offsets[5]) ?? 0,
+    isFavourite: reader.readBoolOrNull(offsets[4]) ?? false,
+    notes: reader.readStringOrNull(offsets[5]),
+    progress: reader.readLongOrNull(offsets[6]) ?? 0,
     status:
-        _ContentItemstatusValueEnumMap[reader.readStringOrNull(offsets[8])] ??
+        _ContentItemstatusValueEnumMap[reader.readStringOrNull(offsets[9])] ??
             ContentStatus.planToWatch,
-    title: reader.readString(offsets[9]),
-    total: reader.readLongOrNull(offsets[10]) ?? 0,
-    type: _ContentItemtypeValueEnumMap[reader.readStringOrNull(offsets[11])] ??
+    title: reader.readString(offsets[10]),
+    total: reader.readLongOrNull(offsets[11]) ?? 0,
+    type: _ContentItemtypeValueEnumMap[reader.readStringOrNull(offsets[12])] ??
         ContentType.anime,
   );
   object.createdAt = reader.readDateTime(offsets[1]);
-  object.updatedAt = reader.readDateTime(offsets[12]);
+  object.updatedAt = reader.readDateTime(offsets[13]);
   return object;
 }
 
@@ -206,24 +213,26 @@ P _contentItemDeserializeProp<P>(
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readDouble(offset)) as P;
+    case 9:
       return (_ContentItemstatusValueEnumMap[reader.readStringOrNull(offset)] ??
           ContentStatus.planToWatch) as P;
-    case 9:
-      return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readString(offset)) as P;
     case 11:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 12:
       return (_ContentItemtypeValueEnumMap[reader.readStringOrNull(offset)] ??
           ContentType.anime) as P;
-    case 12:
+    case 13:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -817,6 +826,16 @@ extension ContentItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isCompleted',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterFilterCondition>
+      isFavouriteEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isFavourite',
         value: value,
       ));
     });
@@ -1792,6 +1811,18 @@ extension ContentItemQuerySortBy
     });
   }
 
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByIsFavourite() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavourite', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByIsFavouriteDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavourite', Sort.desc);
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> sortByNotes() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.asc);
@@ -1966,6 +1997,18 @@ extension ContentItemQuerySortThenBy
     });
   }
 
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByIsFavourite() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavourite', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByIsFavouriteDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isFavourite', Sort.desc);
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QAfterSortBy> thenByNotes() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.asc);
@@ -2106,6 +2149,12 @@ extension ContentItemQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByIsFavourite() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isFavourite');
+    });
+  }
+
   QueryBuilder<ContentItem, ContentItem, QDistinct> distinctByNotes(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2197,6 +2246,12 @@ extension ContentItemQueryProperty
   QueryBuilder<ContentItem, bool, QQueryOperations> isCompletedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isCompleted');
+    });
+  }
+
+  QueryBuilder<ContentItem, bool, QQueryOperations> isFavouriteProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isFavourite');
     });
   }
 

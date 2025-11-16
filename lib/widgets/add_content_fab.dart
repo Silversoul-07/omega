@@ -7,16 +7,19 @@ import '../models/profile_type.dart';
 class AddContentFAB extends StatelessWidget {
   final ProfileType? selectedProfile;
   final VoidCallback? onContentAdded;
+  final String? heroTag;
 
   const AddContentFAB({
     super.key,
     this.selectedProfile,
     this.onContentAdded,
+    this.heroTag,
   });
 
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton.extended(
+      heroTag: heroTag,
       onPressed: () => _openAddScreen(context),
       icon: const Icon(Icons.add),
       label: const Text('Add'),

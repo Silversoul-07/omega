@@ -25,11 +25,12 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _db = DatabaseService();
-  late TabController _tabController;
+  TabController? _tabController;
   List<CustomList> _lists = [];
   bool _isLoading = true;
+  int _lastTabCount = 0;
 
   @override
   void initState() {
@@ -44,23 +45,51 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Future<void> _loadLists() async {
+    if (!mounted) return;
+    
     setState(() => _isLoading = true);
 
     try {
       final lists = await _db.getAllLists();
 
-      if (mounted) {
+      if (!mounted) return;
+      
+      // Check if tab count changed
+      final tabCountChanged = _lastTabCount != lists.length;
+      _lastTabCount = lists.length;
+      
+      if (tabCountChanged) {
+        // Store old controller reference
+        final oldController = _tabController;
+        
+        // Create new controller immediately if we have lists
+        if (lists.isNotEmpty) {
+          _tabController = TabController(
+            length: lists.length,
+            vsync: this,
+          );
+        } else {
+          _tabController = null;
+        }
+        
+        // Update state with new data
         setState(() {
           _lists = lists;
           _isLoading = false;
         });
-
-        // Initialize tab controller with current list count
-        _tabController = TabController(
-          length: _lists.length,
-          vsync: this,
-        );
+        
+        // Dispose old controller after build completes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          oldController?.dispose();
+        });
+      } else {
+        // No tab count change, just update the list
+        setState(() {
+          _lists = lists;
+          _isLoading = false;
+        });
       }
+      
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -76,9 +105,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   @override
   void dispose() {
-    if (!_isLoading && _lists.isNotEmpty) {
-      _tabController.dispose();
-    }
+    _tabController?.dispose();
     super.dispose();
   }
 
@@ -94,38 +121,51 @@ class _LibraryScreenState extends State<LibraryScreen>
       return _buildEmptyState();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Library',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined),
-            onPressed: _createNewList,
-            tooltip: 'Create new list',
+    // Safety check: if lists exist but controller is null or mismatched, show loading
+    if (_tabController == null || _tabController!.length != _lists.length) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Use a keyed subtree to ensure proper rebuild when tab count changes
+    return KeyedSubtree(
+      key: ValueKey('library_tabs_${_lists.length}_${_lists.map((l) => l.id).join("_")}'),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Library',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: _lists.map((list) => _buildTab(list)).toList(),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add_box_outlined),
+              onPressed: _createNewList,
+              tooltip: 'Create new list',
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController!,
+            isScrollable: true,
+            tabs: _lists.map((list) => _buildTab(list)).toList(),
+          ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _lists.map((list) => _buildListTab(list)).toList(),
-      ),
-      floatingActionButton: AddContentFAB(
-        selectedProfile: widget.selectedProfile,
-        onContentAdded: () => setState(() {}),
+        body: TabBarView(
+          controller: _tabController!,
+          children: _lists.map((list) => _buildListTab(list)).toList(),
+        ),
+        floatingActionButton: AddContentFAB(
+          heroTag: 'library_fab',
+          selectedProfile: widget.selectedProfile,
+          onContentAdded: () => setState(() {}),
+        ),
       ),
     );
   }
 
   Widget _buildTab(CustomList list) {
     return Tab(
+      key: ValueKey('tab_${list.id}'),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -135,6 +175,7 @@ class _LibraryScreenState extends State<LibraryScreen>
           if (!list.isSystem) ...[
             const SizedBox(width: 4),
             PopupMenuButton(
+              key: ValueKey('list_menu_${list.id}'),
               icon: const Icon(Icons.more_vert, size: 16),
               padding: EdgeInsets.zero,
               tooltip: 'List options',
@@ -188,6 +229,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   Widget _buildListTab(CustomList list) {
     return FutureBuilder<List<ContentItem>>(
+      key: ValueKey('list_content_${list.id}'),
       future: _db.getContentInList(list.id),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

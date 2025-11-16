@@ -67,6 +67,7 @@ class _ShelvesScreenState extends State<ShelvesScreen>
         ],
       ),
       floatingActionButton: AddContentFAB(
+        heroTag: 'shelves_fab',
         selectedProfile: widget.selectedProfile,
         onContentAdded: () => setState(() {}),
       ),

@@ -38,14 +38,14 @@ class CustomList {
     this.id = Isar.autoIncrement,
     required this.name,
     this.description,
-    List<int>? contentIds,
+    List<int> contentIds = const [],
     this.icon,
-    int? order,
-    bool? isSystem,
+    int order = 0,
+    bool isSystem = false,
   }) {
-    this.contentIds = contentIds ?? [];
-    this.order = order ?? 0;
-    this.isSystem = isSystem ?? false;
+    this.contentIds = contentIds;
+    this.order = order;
+    this.isSystem = isSystem;
     createdAt = DateTime.now();
     updatedAt = DateTime.now();
   }

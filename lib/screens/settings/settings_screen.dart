@@ -600,7 +600,7 @@ class SettingsScreen extends StatelessWidget {
             notes: notes,
           );
 
-          await db.createContentItem(contentItem);
+          await db.addContentItem(contentItem);
 
           // Add to the new list
           await db.addContentToList(newList.id, contentItem.id);
