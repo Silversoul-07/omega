@@ -5,7 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
 import '../../widgets/add_content_fab.dart';
-import '../../widgets/profile_switcher.dart';
+import '../../widgets/profile_selector_button.dart';
 
 /// Shelves screen - Status-based organization
 /// Shows content filtered by status: Planned, Completed, On Hold, Dropped
@@ -51,29 +51,13 @@ class _ShelvesScreenState extends State<ShelvesScreen>
         ),
         actions: [
           if (widget.selectedProfile != null)
-            IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: widget.selectedProfile!.color.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  widget.selectedProfile!.icon,
-                  color: widget.selectedProfile!.color,
-                  size: 20,
-                ),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: ProfileSelectorButton(
+                selectedProfile: widget.selectedProfile,
+                onProfileChange: widget.onProfileChange,
+                onChanged: () => setState(() => _refreshKey++),
               ),
-              tooltip: 'Switch profile',
-              onPressed: () async {
-                final newProfile = await ProfileSwitcher.show(
-                  context,
-                  widget.selectedProfile!,
-                );
-                if (newProfile != null) {
-                  widget.onProfileChange(newProfile);
-                }
-              },
             ),
         ],
         bottom: TabBar(

@@ -4,7 +4,7 @@ import '../../models/enums.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_card.dart';
-import '../../widgets/profile_switcher.dart';
+import '../../widgets/profile_selector_button.dart';
 
 /// Home screen - Shows currently watching content
 class HomeScreen extends StatefulWidget {
@@ -37,8 +37,17 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 12),
-            _buildProfileSelector(),
-            const SizedBox(width: 12),
+            ProfileSelectorButton(
+              selectedProfile: widget.selectedProfile,
+              onProfileChange: widget.onProfileChange,
+              onChanged: () {
+                // Reset filters when profile changes
+                setState(() {
+                  _selectedType = null;
+                  _selectedCategory = null;
+                });
+              },
+            ),
           ],
         ),
       ),
@@ -50,66 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  Widget _buildProfileSelector() {
-    return GestureDetector(
-      onTap: () async {
-        if (widget.selectedProfile != null) {
-          final newProfile = await ProfileSwitcher.show(
-            context,
-            widget.selectedProfile!,
-          );
-          if (newProfile != null) {
-            widget.onProfileChange(newProfile);
-            // Reset filters when profile changes
-            setState(() {
-              _selectedType = null;
-              _selectedCategory = null;
-            });
-          }
-        }
-      },
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.selectedProfile?.color ?? Colors.grey,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.selectedProfile?.icon ?? Icons.apps,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              widget.selectedProfile?.displayName ?? 'All',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: widget.selectedProfile?.color ?? Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  
 
   Widget _buildCategoryFilter() {
     return FutureBuilder<List<ContentItem>>(
