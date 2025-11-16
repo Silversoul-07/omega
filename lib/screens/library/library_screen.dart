@@ -1,13 +1,15 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../models/content_item.dart';
 import '../../models/custom_list.dart';
 import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/add_content_fab.dart';
-import 'list_detail_screen.dart';
+import '../../widgets/content_grid_card.dart';
 import 'add_edit_list_dialog.dart';
 
-/// Library screen - Custom lists management
-/// Phase 2: Shows all custom lists with create/edit/delete functionality
+/// Library screen - Custom lists with tab navigation
+/// Similar to Shelves but with user-created list tabs
 class LibraryScreen extends StatefulWidget {
   final ProfileType? selectedProfile;
   final Function(ProfileType) onProfileChange;
@@ -22,21 +24,76 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class _LibraryScreenState extends State<LibraryScreen>
+    with SingleTickerProviderStateMixin {
   final _db = DatabaseService();
+  late TabController _tabController;
+  List<CustomList> _lists = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _ensureFavouritesExists();
+    _initializeLibrary();
   }
 
-  Future<void> _ensureFavouritesExists() async {
+  Future<void> _initializeLibrary() async {
+    // Ensure Favourites list exists
     await _db.ensureFavouritesListExists();
+    await _loadLists();
+  }
+
+  Future<void> _loadLists() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final lists = await _db.getAllLists();
+
+      if (mounted) {
+        setState(() {
+          _lists = lists;
+          _isLoading = false;
+        });
+
+        // Initialize tab controller with current list count
+        _tabController = TabController(
+          length: _lists.length,
+          vsync: this,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading lists: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    if (!_isLoading && _lists.isNotEmpty) {
+      _tabController.dispose();
+    }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_lists.isEmpty) {
+      return _buildEmptyState();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -50,8 +107,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
             tooltip: 'Create new list',
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: _lists.map((list) => _buildTab(list)).toList(),
+        ),
       ),
-      body: _buildListsGrid(),
+      body: TabBarView(
+        controller: _tabController,
+        children: _lists.map((list) => _buildListTab(list)).toList(),
+      ),
       floatingActionButton: AddContentFAB(
         selectedProfile: widget.selectedProfile,
         onContentAdded: () => setState(() {}),
@@ -59,9 +124,71 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildListsGrid() {
-    return FutureBuilder<List<CustomList>>(
-      future: _db.getAllLists(),
+  Widget _buildTab(CustomList list) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(list.icon ?? '📚', style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 6),
+          Text(list.name),
+          if (!list.isSystem) ...[
+            const SizedBox(width: 4),
+            PopupMenuButton(
+              icon: const Icon(Icons.more_vert, size: 16),
+              padding: EdgeInsets.zero,
+              tooltip: 'List options',
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 18),
+                      SizedBox(width: 8),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.share, size: 18),
+                      SizedBox(width: 8),
+                      Text('Export'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 18, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+              onSelected: (value) {
+                if (value == 'edit') {
+                  _editList(list);
+                } else if (value == 'export') {
+                  _exportList(list);
+                } else if (value == 'delete') {
+                  _confirmDeleteList(list);
+                }
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListTab(CustomList list) {
+    return FutureBuilder<List<ContentItem>>(
+      future: _db.getContentInList(list.id),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -79,26 +206,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Error loading lists',
+                  'Error loading content',
                   style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  snapshot.error.toString(),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
-                      ),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           );
         }
 
-        final lists = snapshot.data ?? [];
+        final items = snapshot.data ?? [];
 
-        if (lists.isEmpty) {
-          return _buildEmptyState();
+        if (items.isEmpty) {
+          return _buildEmptyListState(list);
         }
 
         return RefreshIndicator(
@@ -106,19 +225,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
             setState(() {});
           },
           child: GridView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              crossAxisCount: 3,
+              childAspectRatio: 0.55,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 12,
             ),
-            itemCount: lists.length + 1, // +1 for "Create New List" card
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              if (index == lists.length) {
-                return _buildCreateListCard();
-              }
-              return _buildListCard(lists[index]);
+              return _buildContentCardWithRemove(items[index], list);
             },
           ),
         );
@@ -126,147 +242,80 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildListCard(CustomList list) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      child: InkWell(
-        onTap: () => _openListDetail(list),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with icon and menu
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Theme.of(context).colorScheme.primaryContainer,
-                    Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
-                  ],
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    list.icon ?? '📚',
-                    style: const TextStyle(fontSize: 28),
-                  ),
-                  const Spacer(),
-                  if (!list.isSystem)
-                    PopupMenuButton(
-                      icon: const Icon(Icons.more_vert, size: 20),
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit, size: 18),
-                              SizedBox(width: 8),
-                              Text('Edit'),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, size: 18, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
-                            ],
-                          ),
-                        ),
-                      ],
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          _editList(list);
-                        } else if (value == 'delete') {
-                          _confirmDeleteList(list);
-                        }
-                      },
-                    ),
-                ],
-              ),
-            ),
-            // List info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      list.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (list.description != null && list.description!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        list.description!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey.shade600,
-                            ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.movie,
-                          size: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${list.itemCount} ${list.itemCount == 1 ? 'item' : 'items'}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+  Widget _buildContentCardWithRemove(ContentItem item, CustomList list) {
+    return Stack(
+      children: [
+        ContentGridCard(
+          item: item,
+          onChanged: () => setState(() {}),
         ),
-      ),
+        // Remove from list button
+        if (!list.isSystem)
+          Positioned(
+            top: 4,
+            left: 4,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                iconSize: 16,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
+                ),
+                onPressed: () => _removeFromList(item, list),
+                tooltip: 'Remove from list',
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildCreateListCard() {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-      child: InkWell(
-        onTap: _createNewList,
+  Widget _buildEmptyListState(CustomList list) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.add_circle_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.primary,
+            Text(
+              list.icon ?? '📚',
+              style: const TextStyle(fontSize: 64),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${list.name} is empty',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Create New List',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+              'Add content to this list from the content details page',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
                   ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () {
+                // Switch to Add tab to add new content
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('💡 Tip: Use the + button to add content, then add it to this list from the content details page'),
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.info_outline),
+              label: const Text('How to add content'),
             ),
           ],
         ),
@@ -275,55 +324,76 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.library_books_outlined,
-              size: 100,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Lists Yet',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Create custom lists to organize your content',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _createNewList,
-              icon: const Icon(Icons.add),
-              label: const Text('Create Your First List'),
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Library',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.library_books_outlined,
+                size: 100,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Lists Yet',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Create custom lists to organize your content',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _createNewList,
+                icon: const Icon(Icons.add),
+                label: const Text('Create Your First List'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Future<void> _openListDetail(CustomList list) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ListDetailScreen(list: list),
-      ),
-    );
+  Future<void> _removeFromList(ContentItem item, CustomList list) async {
+    try {
+      await _db.removeContentFromList(list.id, item.id);
 
-    if (result == true && mounted) {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed "${item.title}" from ${list.name}'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -334,7 +404,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
 
     if (result == true && mounted) {
-      setState(() {});
+      await _loadLists();
     }
   }
 
@@ -345,7 +415,67 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
 
     if (result == true && mounted) {
-      setState(() {});
+      await _loadLists();
+    }
+  }
+
+  Future<void> _exportList(CustomList list) async {
+    // Import share_plus for export
+    try {
+      final items = await _db.getContentInList(list.id);
+
+      final exportData = {
+        'app': 'Content Tracker',
+        'version': '1.0',
+        'list_name': list.name,
+        'list_description': list.description,
+        'list_icon': list.icon,
+        'created_at': list.createdAt.toIso8601String(),
+        'items': items.map((item) => {
+          'title': item.title,
+          'type': item.type.toString().split('.').last,
+          'status': item.status.toString().split('.').last,
+          'progress': item.progress,
+          'total': item.total,
+          'category': item.category,
+          'notes': item.notes,
+        }).toList(),
+      };
+
+      // For now, show a dialog with the JSON
+      // TODO: Use share_plus package once available
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Export: ${list.name}'),
+            content: SingleChildScrollView(
+              child: SelectableText(
+                const JsonEncoder.withIndent('  ').convert(exportData),
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -374,8 +504,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (confirmed == true && mounted) {
       try {
         await _db.deleteList(list.id);
-        setState(() {});
+
         if (mounted) {
+          await _loadLists();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Deleted "${list.name}"'),
