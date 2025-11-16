@@ -5,6 +5,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/content_grid_card.dart';
 import '../../widgets/add_content_fab.dart';
+import '../../widgets/profile_switcher.dart';
 
 /// Shelves screen - Status-based organization
 /// Shows content filtered by status: Planned, Completed, On Hold, Dropped
@@ -26,6 +27,7 @@ class _ShelvesScreenState extends State<ShelvesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _db = DatabaseService();
+  int _refreshKey = 0;
 
   @override
   void initState() {
@@ -47,6 +49,33 @@ class _ShelvesScreenState extends State<ShelvesScreen>
           'Shelves',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          if (widget.selectedProfile != null)
+            IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: widget.selectedProfile!.color.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  widget.selectedProfile!.icon,
+                  color: widget.selectedProfile!.color,
+                  size: 20,
+                ),
+              ),
+              tooltip: 'Switch profile',
+              onPressed: () async {
+                final newProfile = await ProfileSwitcher.show(
+                  context,
+                  widget.selectedProfile!,
+                );
+                if (newProfile != null) {
+                  widget.onProfileChange(newProfile);
+                }
+              },
+            ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -69,13 +98,14 @@ class _ShelvesScreenState extends State<ShelvesScreen>
       floatingActionButton: AddContentFAB(
         heroTag: 'shelves_fab',
         selectedProfile: widget.selectedProfile,
-        onContentAdded: () => setState(() {}),
+        onContentAdded: () => setState(() => _refreshKey++),
       ),
     );
   }
 
   Widget _buildStatusTab(ContentStatus status) {
     return FutureBuilder<List<ContentItem>>(
+      key: ValueKey('status_${status.name}_$_refreshKey'),
       future: _fetchContentByStatus(status),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

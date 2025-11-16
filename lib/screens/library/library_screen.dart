@@ -6,6 +6,7 @@ import '../../models/profile_type.dart';
 import '../../services/database_service.dart';
 import '../../widgets/add_content_fab.dart';
 import '../../widgets/content_grid_card.dart';
+import '../../widgets/profile_switcher.dart';
 import 'add_edit_list_dialog.dart';
 
 /// Library screen - Custom lists with tab navigation
@@ -31,6 +32,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   List<CustomList> _lists = [];
   bool _isLoading = true;
   int _lastTabCount = 0;
+  int _refreshKey = 0;
 
   @override
   void initState() {
@@ -138,6 +140,31 @@ class _LibraryScreenState extends State<LibraryScreen>
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           actions: [
+            if (widget.selectedProfile != null)
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: widget.selectedProfile!.color.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    widget.selectedProfile!.icon,
+                    color: widget.selectedProfile!.color,
+                    size: 20,
+                  ),
+                ),
+                tooltip: 'Switch profile',
+                onPressed: () async {
+                  final newProfile = await ProfileSwitcher.show(
+                    context,
+                    widget.selectedProfile!,
+                  );
+                  if (newProfile != null) {
+                    widget.onProfileChange(newProfile);
+                  }
+                },
+              ),
             IconButton(
               icon: const Icon(Icons.add_box_outlined),
               onPressed: _createNewList,
@@ -157,7 +184,7 @@ class _LibraryScreenState extends State<LibraryScreen>
         floatingActionButton: AddContentFAB(
           heroTag: 'library_fab',
           selectedProfile: widget.selectedProfile,
-          onContentAdded: () => setState(() {}),
+          onContentAdded: () => setState(() => _refreshKey++),
         ),
       ),
     );
@@ -229,7 +256,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   Widget _buildListTab(CustomList list) {
     return FutureBuilder<List<ContentItem>>(
-      key: ValueKey('list_content_${list.id}'),
+      key: ValueKey('list_content_${list.id}_$_refreshKey'),
       future: _db.getContentInList(list.id),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -418,7 +445,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       await _db.removeContentFromList(list.id, item.id);
 
       if (mounted) {
-        setState(() {});
+        setState(() => _refreshKey++);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Removed "${item.title}" from ${list.name}'),
@@ -545,16 +572,59 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     if (confirmed == true && mounted) {
       try {
+        // Get current tab index before deletion
+        final currentIndex = _tabController?.index ?? 0;
+
         await _db.deleteList(list.id);
 
         if (mounted) {
-          await _loadLists();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Deleted "${list.name}"'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          // Reload lists and handle tab switching
+          final lists = await _db.getAllLists();
+
+          if (lists.isEmpty) {
+            // No lists left, show empty state
+            setState(() {
+              _lists = [];
+              _tabController?.dispose();
+              _tabController = null;
+              _lastTabCount = 0;
+              _isLoading = false;
+            });
+          } else {
+            // Ensure the new active tab is within bounds
+            final newIndex = currentIndex >= lists.length
+                ? lists.length - 1
+                : currentIndex;
+
+            // Create new controller with adjusted index
+            final oldController = _tabController;
+            _tabController = TabController(
+              length: lists.length,
+              vsync: this,
+              initialIndex: newIndex,
+            );
+
+            setState(() {
+              _lists = lists;
+              _lastTabCount = lists.length;
+              _isLoading = false;
+            });
+
+            // Dispose old controller after build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              oldController?.dispose();
+            });
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Deleted "${list.name}"'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
