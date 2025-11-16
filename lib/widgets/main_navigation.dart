@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/discover/discover_screen.dart';
 import '../screens/library/library_screen.dart';
@@ -62,25 +63,25 @@ class _MainNavigationState extends State<MainNavigation> {
                 _currentIndex = index;
               });
             },
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home),
+                icon: Icon(PhosphorIconsRegular.house),
+                selectedIcon: Icon(PhosphorIconsFill.house),
                 label: 'Home',
               ),
               NavigationDestination(
-                icon: Icon(Icons.explore_outlined),
-                selectedIcon: Icon(Icons.explore),
+                icon: Icon(PhosphorIconsRegular.compass),
+                selectedIcon: Icon(PhosphorIconsFill.compass),
                 label: 'Discover',
               ),
               NavigationDestination(
-                icon: Icon(Icons.library_books_outlined),
-                selectedIcon: Icon(Icons.library_books),
+                icon: Icon(PhosphorIconsRegular.books),
+                selectedIcon: Icon(PhosphorIconsFill.books),
                 label: 'Library',
               ),
               NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
+                icon: Icon(PhosphorIconsRegular.gear),
+                selectedIcon: Icon(PhosphorIconsFill.gear),
                 label: 'Settings',
               ),
             ],

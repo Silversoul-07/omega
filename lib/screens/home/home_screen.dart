@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../models/content_item.dart';
 import '../../models/enums.dart';
 import '../../models/profile_type.dart';
@@ -87,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              widget.selectedProfile?.icon ?? Icons.apps,
+              widget.selectedProfile?.icon ?? PhosphorIconsRegular.squares,
               size: 16,
               color: widget.selectedProfile?.color ?? Colors.grey,
             ),
@@ -102,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 2),
             Icon(
-              Icons.keyboard_arrow_down,
+              PhosphorIconsRegular.caretDown,
               size: 16,
               color: widget.selectedProfile?.color ?? Colors.grey,
             ),
@@ -245,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
       future: _fetchContent(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerLoading(context);
         }
 
         if (snapshot.hasError) {
@@ -254,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.error_outline,
+                  PhosphorIconsRegular.warningCircle,
                   size: 64,
                   color: Theme.of(context).colorScheme.error,
                 ),
@@ -310,10 +313,12 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.play_circle_outline,
+              PhosphorIconsRegular.playCircle,
               size: 100,
               color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            ),
+            ).animate()
+              .fadeIn(duration: 600.ms)
+              .scale(delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 24),
             Text(
               'Nothing Playing',
@@ -336,12 +341,106 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Switch to Discover tab (index 1)
                 DefaultTabController.of(context).animateTo(1);
               },
-              icon: const Icon(Icons.explore),
+              icon: Icon(PhosphorIconsRegular.compass),
               label: const Text('Discover Content'),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildShimmerLoading(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0);
+    final highlightColor = isDark ? const Color(0xFF4A5568) : const Color(0xFFF8FAFC);
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Shimmer.fromColors(
+            baseColor: baseColor,
+            highlightColor: highlightColor,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 16,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 16,
+                            width: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Container(
+                                height: 24,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                height: 24,
+                                width: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            height: 6,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

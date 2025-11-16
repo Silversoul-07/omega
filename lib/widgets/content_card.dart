@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../models/content_item.dart';
 import '../models/enums.dart';
 import '../services/database_service.dart';
 
-/// Reusable card widget for displaying content items
+/// Reusable card widget for displaying content items with modern animations
 class ContentCard extends StatelessWidget {
   final ContentItem item;
   final VoidCallback? onTap;
@@ -18,120 +21,179 @@ class ContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap ?? () => _showDetailsDialog(context),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Placeholder image
-              Container(
-                width: 60,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  _getTypeIcon(item.type),
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Content details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _buildChip(
-                          context,
-                          item.type.displayName,
-                          Theme.of(context).colorScheme.primary,
-                        ),
-                        _buildChip(
-                          context,
-                          item.status.displayName,
-                          _getStatusColor(context, item.status),
-                        ),
-                        if (item.category != null && item.category!.isNotEmpty)
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap ?? () => _showDetailsDialog(context),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Modern image placeholder with shimmer
+                _buildImagePlaceholder(context, isDark),
+                const SizedBox(width: 16),
+                // Content details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
                           _buildChip(
                             context,
-                            item.category!,
-                            Colors.teal,
+                            item.type.displayName,
+                            Theme.of(context).colorScheme.primary,
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Progress bar
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Progress',
-                              style: Theme.of(context).textTheme.bodySmall,
+                          _buildChip(
+                            context,
+                            item.status.displayName,
+                            _getStatusColor(context, item.status),
+                          ),
+                          if (item.category != null && item.category!.isNotEmpty)
+                            _buildChip(
+                              context,
+                              item.category!,
+                              Colors.teal,
                             ),
-                            Text(
-                              item.progressDisplay,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: item.total > 0 ? item.progress / item.total : 0,
-                          backgroundColor: Theme.of(context)
-                              .colorScheme
-                              .primaryContainer
-                              .withOpacity(0.3),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Modern progress bar
+                      _buildProgressSection(context),
+                    ],
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate()
+      .fadeIn(duration: 300.ms, curve: Curves.easeOut)
+      .slideY(begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOut);
+  }
+
+  Widget _buildImagePlaceholder(BuildContext context, bool isDark) {
+    return Hero(
+      tag: 'content_${item.id}',
+      child: Container(
+        width: 70,
+        height: 100,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.8),
+              Theme.of(context).colorScheme.secondary.withOpacity(0.6),
             ],
           ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(
+          _getTypeIcon(item.type),
+          color: Colors.white,
+          size: 36,
         ),
       ),
     );
   }
 
+  Widget _buildProgressSection(BuildContext context) {
+    final progress = item.total > 0 ? item.progress / item.total : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Progress',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+            ),
+            Text(
+              item.progressDisplay,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 6,
+            backgroundColor: Theme.of(context)
+                .colorScheme
+                .primaryContainer
+                .withOpacity(0.3),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildChip(BuildContext context, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.3,
             ),
       ),
     );
@@ -140,15 +202,15 @@ class ContentCard extends StatelessWidget {
   IconData _getTypeIcon(ContentType type) {
     switch (type) {
       case ContentType.anime:
-        return Icons.animation;
+        return PhosphorIconsRegular.play;
       case ContentType.comic:
-        return Icons.auto_stories;
+        return PhosphorIconsRegular.book;
       case ContentType.novel:
-        return Icons.menu_book;
+        return PhosphorIconsRegular.bookOpen;
       case ContentType.movie:
-        return Icons.movie;
+        return PhosphorIconsRegular.film;
       case ContentType.tvSeries:
-        return Icons.tv;
+        return PhosphorIconsRegular.television;
     }
   }
 
@@ -317,15 +379,15 @@ class _ContentDetailsDialogState extends State<_ContentDetailsDialog> {
   IconData _getTypeIcon(ContentType type) {
     switch (type) {
       case ContentType.anime:
-        return Icons.animation;
+        return PhosphorIconsRegular.play;
       case ContentType.comic:
-        return Icons.auto_stories;
+        return PhosphorIconsRegular.book;
       case ContentType.novel:
-        return Icons.menu_book;
+        return PhosphorIconsRegular.bookOpen;
       case ContentType.movie:
-        return Icons.movie;
+        return PhosphorIconsRegular.film;
       case ContentType.tvSeries:
-        return Icons.tv;
+        return PhosphorIconsRegular.television;
     }
   }
 

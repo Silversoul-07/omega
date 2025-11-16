@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../models/content_item.dart';
 import '../../models/enums.dart';
 import '../../models/profile_type.dart';
@@ -82,7 +83,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              widget.selectedProfile?.icon ?? Icons.apps,
+              widget.selectedProfile?.icon ?? PhosphorIconsRegular.squares,
               size: 16,
               color: widget.selectedProfile?.color ?? Colors.grey,
             ),
@@ -97,7 +98,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ),
             const SizedBox(width: 2),
             Icon(
-              Icons.keyboard_arrow_down,
+              PhosphorIconsRegular.caretDown,
               size: 16,
               color: widget.selectedProfile?.color ?? Colors.grey,
             ),
@@ -136,7 +137,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddContentScreen(),
-        icon: const Icon(Icons.add),
+        icon: Icon(PhosphorIconsRegular.plus),
         label: const Text('Add Content'),
         tooltip: 'Add new content to library',
       ),
@@ -150,10 +151,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search content...',
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: Icon(PhosphorIconsRegular.magnifyingGlass),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: Icon(PhosphorIconsRegular.x),
                   onPressed: () {
                     _searchController.clear();
                     setState(() {
@@ -163,7 +164,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 )
               : null,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           filled: true,
         ),
@@ -228,7 +229,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.error_outline,
+                  PhosphorIconsRegular.warningCircle,
                   size: 64,
                   color: Theme.of(context).colorScheme.error,
                 ),
@@ -322,7 +323,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.search_off,
+                PhosphorIconsRegular.magnifyingGlass,
                 size: 80,
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
               ),
@@ -354,7 +355,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.explore_outlined,
+              PhosphorIconsRegular.compass,
               size: 100,
               color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
             ),
@@ -379,7 +380,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 // Switch to Settings tab (index 3)
                 DefaultTabController.of(context).animateTo(3);
               },
-              icon: const Icon(Icons.settings),
+              icon: Icon(PhosphorIconsRegular.gear),
               label: const Text('Populate Test Data'),
             ),
           ],
