@@ -21,74 +21,41 @@ class ContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
         margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap ?? () => _showDetailsDialog(context),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
+          child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Modern image placeholder with shimmer
-                _buildImagePlaceholder(context, isDark),
+                // Premium thumbnail with Material You colors
+                _buildThumbnail(context),
                 const SizedBox(width: 16),
-                // Content details
+                // Content details with perfect typography
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Title with perfect line height
                       Text(
                         item.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              height: 1.3,
-                            ),
+                        style: theme.textTheme.titleMedium,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildChip(
-                            context,
-                            item.type.displayName,
-                            Theme.of(context).colorScheme.primary,
-                          ),
-                          _buildChip(
-                            context,
-                            item.status.displayName,
-                            _getStatusColor(context, item.status),
-                          ),
-                          if (item.category != null && item.category!.isNotEmpty)
-                            _buildChip(
-                              context,
-                              item.category!,
-                              Colors.teal,
-                            ),
-                        ],
-                      ),
+                      // Metadata chips
+                      _buildMetadataRow(context),
                       const SizedBox(height: 12),
-                      // Modern progress bar
+                      // Progress indicator
                       _buildProgressSection(context),
                     ],
                   ),
@@ -99,104 +66,100 @@ class ContentCard extends StatelessWidget {
         ),
       ),
     ).animate()
-      .fadeIn(duration: 300.ms, curve: Curves.easeOut)
-      .slideY(begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOut);
+      .fadeIn(duration: 250.ms, curve: Curves.easeOut)
+      .slideY(begin: 0.05, end: 0, duration: 250.ms, curve: Curves.easeOutCubic);
   }
 
-  Widget _buildImagePlaceholder(BuildContext context, bool isDark) {
+  Widget _buildThumbnail(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Hero(
       tag: 'content_${item.id}',
       child: Container(
-        width: 70,
-        height: 100,
+        width: 80,
+        height: 112,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.8),
-              Theme.of(context).colorScheme.secondary.withOpacity(0.6),
-            ],
-          ),
+          color: colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Icon(
-          _getTypeIcon(item.type),
-          color: Colors.white,
-          size: 36,
+        child: Center(
+          child: Icon(
+            _getTypeIcon(item.type),
+            color: colorScheme.onPrimaryContainer,
+            size: 40,
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildMetadataRow(BuildContext context) {
+    return Row(
+      children: [
+        _buildChip(context, item.type.displayName, _getTypeColor(context)),
+        const SizedBox(width: 8),
+        _buildChip(context, item.status.displayName, _getStatusColor(context, item.status)),
+      ],
+    );
+  }
+
   Widget _buildProgressSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final progress = item.total > 0 ? item.progress / item.total : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Progress',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             Text(
               item.progressDisplay,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.primary,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: Theme.of(context)
-                .colorScheme
-                .primaryContainer
-                .withOpacity(0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Theme.of(context).colorScheme.primary,
-            ),
-          ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: progress,
+          minHeight: 4,
+          backgroundColor: colorScheme.surfaceContainerHighest,
+          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+          borderRadius: BorderRadius.circular(2),
         ),
       ],
     );
   }
 
-  Widget _buildChip(BuildContext context, String label, Color color) {
+  Widget _buildChip(BuildContext context, String label, Color backgroundColor) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              letterSpacing: 0.3,
-            ),
+        style: theme.textTheme.labelSmall,
       ),
     );
+  }
+
+  Color _getTypeColor(BuildContext context) {
+    return Theme.of(context).colorScheme.secondaryContainer;
   }
 
   IconData _getTypeIcon(ContentType type) {
@@ -215,17 +178,19 @@ class ContentCard extends StatelessWidget {
   }
 
   Color _getStatusColor(BuildContext context, ContentStatus status) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     switch (status) {
       case ContentStatus.watching:
-        return Colors.blue;
+        return colorScheme.tertiaryContainer;
       case ContentStatus.completed:
-        return Colors.green;
+        return colorScheme.primaryContainer;
       case ContentStatus.planToWatch:
-        return Colors.orange;
+        return colorScheme.secondaryContainer;
       case ContentStatus.onHold:
-        return Colors.purple;
+        return colorScheme.surfaceContainerHighest;
       case ContentStatus.dropped:
-        return Colors.red;
+        return colorScheme.errorContainer;
     }
   }
 

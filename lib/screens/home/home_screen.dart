@@ -31,26 +31,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Home',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 12),
-            _buildProfileSelector(),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTypeDropdown(),
-            ),
-          ],
-        ),
+        title: Text('Home', style: theme.appBarTheme.titleTextStyle),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: _buildProfileSelector(),
+          ),
+        ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Type filter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: _buildTypeDropdown(),
+          ),
+          // Category filter
           _buildCategoryFilter(),
+          // Content list
           Expanded(child: _buildContentList()),
         ],
       ),
@@ -58,8 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProfileSelector() {
-    return GestureDetector(
-      onTap: () async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return FilledButton.tonalIcon(
+      onPressed: () async {
         if (widget.selectedProfile != null) {
           final newProfile = await ProfileSwitcher.show(
             context,
@@ -67,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           if (newProfile != null) {
             widget.onProfileChange(newProfile);
-            // Reset filters when profile changes
             setState(() {
               _selectedType = null;
               _selectedCategory = null;
@@ -75,82 +79,47 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
       },
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.selectedProfile?.color ?? Colors.grey,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.selectedProfile?.icon ?? PhosphorIconsRegular.squares,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              widget.selectedProfile?.displayName ?? 'All',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: widget.selectedProfile?.color ?? Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              PhosphorIconsRegular.caretDown,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-          ],
-        ),
+      icon: Icon(
+        widget.selectedProfile?.icon ?? PhosphorIconsRegular.squares,
+        size: 18,
       ),
+      label: Text(widget.selectedProfile?.displayName ?? 'All'),
     );
   }
 
   Widget _buildTypeDropdown() {
-    return DropdownButton<ContentType?>(
-      value: _selectedType,
-      isExpanded: true,
-      underline: Container(),
-      hint: const Text('All Types'),
-      items: [
-        const DropdownMenuItem<ContentType?>(
-          value: null,
-          child: Text('All Types'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.anime,
-          child: Text('Anime'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.comic,
-          child: Text('Comics'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.novel,
-          child: Text('Novels'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.movie,
-          child: Text('Movies'),
-        ),
-        const DropdownMenuItem<ContentType?>(
-          value: ContentType.tvSeries,
-          child: Text('TV Series'),
-        ),
-      ],
-      onChanged: (value) {
+    final theme = Theme.of(context);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildFilterChip('All', null),
+          const SizedBox(width: 8),
+          _buildFilterChip('Anime', ContentType.anime),
+          const SizedBox(width: 8),
+          _buildFilterChip('Comics', ContentType.comic),
+          const SizedBox(width: 8),
+          _buildFilterChip('Novels', ContentType.novel),
+          const SizedBox(width: 8),
+          _buildFilterChip('Movies', ContentType.movie),
+          const SizedBox(width: 8),
+          _buildFilterChip('TV Series', ContentType.tvSeries),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, ContentType? type) {
+    final isSelected = _selectedType == type;
+
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
         setState(() {
-          _selectedType = value;
-          _selectedCategory = null; // Reset category when type changes
+          _selectedType = selected ? type : null;
+          _selectedCategory = null;
         });
       },
     );
@@ -351,16 +320,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildShimmerLoading(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0);
-    final highlightColor = isDark ? const Color(0xFF4A5568) : const Color(0xFFF8FAFC);
+    final colorScheme = Theme.of(context).colorScheme;
+    final baseColor = colorScheme.surfaceContainerHighest;
+    final highlightColor = colorScheme.surfaceContainerLow;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: 5,
+      itemCount: 6,
       itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Shimmer.fromColors(
             baseColor: baseColor,
             highlightColor: highlightColor,
@@ -370,65 +339,70 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Thumbnail skeleton
                     Container(
-                      width: 70,
-                      height: 100,
+                      width: 80,
+                      height: 112,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     const SizedBox(width: 16),
+                    // Content skeleton
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Title
                           Container(
-                            height: 16,
+                            height: 20,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           const SizedBox(height: 8),
                           Container(
-                            height: 16,
-                            width: 150,
+                            height: 20,
+                            width: 180,
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(4),
                             ),
                           ),
                           const SizedBox(height: 12),
+                          // Chips
                           Row(
                             children: [
                               Container(
-                                height: 24,
-                                width: 60,
+                                height: 28,
+                                width: 70,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                height: 24,
-                                width: 80,
+                                height: 28,
+                                width: 90,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
+                          // Progress bar
                           Container(
-                            height: 6,
+                            height: 4,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ],

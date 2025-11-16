@@ -52,8 +52,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildProfileBadge() {
-    return GestureDetector(
-      onTap: () async {
+    return FilledButton.tonalIcon(
+      onPressed: () async {
         if (widget.selectedProfile != null) {
           final newProfile = await ProfileSwitcher.show(
             context,
@@ -61,67 +61,33 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           );
           if (newProfile != null) {
             widget.onProfileChange(newProfile);
-            // Reset filters when profile changes
             setState(() {
               _selectedType = null;
             });
           }
         }
       },
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: widget.selectedProfile?.color.withOpacity(0.1) ?? Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: widget.selectedProfile?.color ?? Colors.grey,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.selectedProfile?.icon ?? PhosphorIconsRegular.squares,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              widget.selectedProfile?.displayName ?? 'All',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: widget.selectedProfile?.color ?? Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              PhosphorIconsRegular.caretDown,
-              size: 16,
-              color: widget.selectedProfile?.color ?? Colors.grey,
-            ),
-          ],
-        ),
+      icon: Icon(
+        widget.selectedProfile?.icon ?? PhosphorIconsRegular.squares,
+        size: 18,
       ),
+      label: Text(widget.selectedProfile?.displayName ?? 'All'),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Discover',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 12),
-            _buildProfileBadge(),
-          ],
-        ),
+        title: Text('Discover', style: theme.appBarTheme.titleTextStyle),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: _buildProfileBadge(),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -129,7 +95,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           _buildSearchBar(),
           // Filter chips
           _buildFilterChips(),
-          // Content list
+          // Content grid
           Expanded(
             child: _buildContentList(),
           ),
@@ -138,8 +104,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddContentScreen(),
         icon: Icon(PhosphorIconsRegular.plus),
-        label: const Text('Add Content'),
-        tooltip: 'Add new content to library',
+        label: const Text('Add'),
       ),
     );
   }
